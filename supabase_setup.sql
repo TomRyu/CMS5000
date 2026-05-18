@@ -23,7 +23,7 @@ alter table public.cms_users disable row level security;
 insert into public.cms_users (username, password_hash, role, display_name)
 values (
   'admin',
-  '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+  '$2a$11$nC6uUNxwLNMzKrP.P.z5XeZTnvNd7KNDCz05x5nsHUDz7vcFx1zhO',
   'Admin',
   '시스템 관리자'
 )

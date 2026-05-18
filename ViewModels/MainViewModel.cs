@@ -4,6 +4,8 @@ using CMS5000.ViewModels.Base;
 using CMS5000.ViewModels.Expert;
 using CMS5000.ViewModels.Maintenance;
 using CMS5000.ViewModels.Operator;
+using Velopack;
+using Velopack.Sources;
 
 namespace CMS5000.ViewModels;
 
@@ -30,6 +32,9 @@ public class MainViewModel : ViewModelBase
     public string Breadcrumb          { get => _breadcrumb;        set => SetProperty(ref _breadcrumb, value); }
     public int AlertCount => 3;
     public int NotificationCount => 2;
+
+    private string _updateStatus = "";
+    public string UpdateStatus { get => _updateStatus; set => SetProperty(ref _updateStatus, value); }
 
     public OperatorViewModel    OperatorVM    { get; } = new();
     public MaintenanceViewModel MaintenanceVM { get; } = new();
@@ -71,6 +76,7 @@ public class MainViewModel : ViewModelBase
         _clockTimer.Start();
 
         BuildNavTree();
+        _ = CheckForUpdatesAsync();
     }
 
     private void BuildNavTree()
@@ -166,6 +172,24 @@ public class MainViewModel : ViewModelBase
     {
         IsLoginVisible = true;
         CurrentView = null;
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var mgr = new UpdateManager(new GithubSource("https://github.com/TomRyu/CMS5000", null, false));
+            var update = await mgr.CheckForUpdatesAsync();
+            if (update == null) return;
+
+            UpdateStatus = $"업데이트 다운로드 중... v{update.TargetFullRelease.Version}";
+            await mgr.DownloadUpdatesAsync(update);
+            UpdateStatus = $"v{update.TargetFullRelease.Version} 준비 완료 — 재시작 시 적용";
+        }
+        catch
+        {
+            // 오프라인 또는 업데이트 서버 접근 불가 시 무시
+        }
     }
 
     private void UpdateBreadcrumb()

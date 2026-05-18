@@ -1,4 +1,4 @@
-name: 빌드 및 배포
+name: 빌드 및 배포 (Velopack)
 
 on:
   push:
@@ -21,35 +21,53 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: 자립실행 단일 EXE 빌드
+      - name: Velopack CLI(vpk) 설치
+        run: dotnet tool install -g vpk
+
+      - name: 의존성 복원
+        run: dotnet restore CMS5000.csproj
+
+      - name: 자립실행 빌드
         run: |
           dotnet publish CMS5000.csproj -c Release -r win-x64 `
             --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:PublishSingleFile=false `
             -p:PublishTrimmed=false `
             -p:PublishReadyToRun=true `
             -o dist
 
-      - name: 버전 태그 생성
+      - name: 버전 설정
         id: version
-        run: echo "tag=v1.0.${{ github.run_number }}" >> $env:GITHUB_OUTPUT
+        run: echo "ver=1.0.${{ github.run_number }}" >> $env:GITHUB_OUTPUT
 
-      - name: GitHub Release 생성 및 EXE 첨부
+      - name: Velopack 패키지 생성
+        run: |
+          vpk pack `
+            --packId   CMS5000 `
+            --packVersion ${{ steps.version.outputs.ver }} `
+            --packDir  dist `
+            --mainExe  CMS5000.exe `
+            --packTitle "CMS-5000 설비 상태 모니터링" `
+            --outputDir releases
+
+      - name: GitHub Release 생성 및 패키지 첨부
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: "CMS-5000 ${{ steps.version.outputs.tag }}"
+          tag_name: v${{ steps.version.outputs.ver }}
+          name: "CMS-5000 v${{ steps.version.outputs.ver }}"
           draft: false
           prerelease: false
-          files: dist/CMS5000.exe
+          files: releases/*
           body: |
-            ## CMS-5000 ${{ steps.version.outputs.tag }}
+            ## CMS-5000 v${{ steps.version.outputs.ver }}
 
-            ### 설치 방법
-            1. 아래 **CMS5000.exe** 를 다운로드합니다
-            2. 원하는 위치에 저장합니다
-            3. 더블클릭으로 실행합니다 (별도 설치 불필요)
+            ### 최초 설치
+            1. **CMS5000Setup.exe** 를 다운로드합니다
+            2. 더블클릭으로 설치합니다 (바탕화면 바로가기 생성됨)
+
+            ### 자동 업데이트
+            앱 실행 시 최신 버전이 있으면 백그라운드에서 자동 다운로드되어
+            다음 재실행 시 적용됩니다.
 
             > Windows 10 이상 필요 · .NET 런타임 불필요 (자립실행 패키지)
 
@@ -59,4 +77,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: installer
           force_orphan: true
-          commit_message: "페이지 업데이트 #${{ github.run_number }}"
+          commit_message: "페이지 업데이트 v${{ steps.version.outputs.ver }}"

@@ -21,13 +21,16 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: VS MSBuild 설정
+        uses: microsoft/setup-msbuild@v2
+
       - name: 의존성 복원
         run: dotnet restore CMS5000.csproj
 
       - name: ClickOnce 게시
         run: |
-          dotnet publish CMS5000.csproj `
-            -c Release `
+          msbuild CMS5000.csproj /t:Publish `
+            /p:Configuration=Release `
             /p:PublishProfile=Properties/PublishProfiles/ClickOnceProfile.pubxml `
             /p:ApplicationRevision=${{ github.run_number }}
 

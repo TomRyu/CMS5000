@@ -17,3 +17,6 @@ packages/
 # OS
 Thumbs.db
 .DS_Store
+
+# Supabase 자격증명 (커밋 금지)
+appsettings.json

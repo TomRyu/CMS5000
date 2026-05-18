@@ -4,5 +4,6 @@ public enum UserRole
 {
     Operator,       // 운전자
     Maintenance,    // 정비담당자
-    Expert          // 진단전문가
+    Expert,         // 진단전문가
+    Admin           // 시스템 관리자
 }

@@ -4,13 +4,12 @@
              Background="{StaticResource ContentBgBrush}">
 
     <Grid>
-        <!-- 좌측 브랜드 패널 -->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- 좌측: 다크 브랜드 배경 -->
+        <!-- 좌측: 다크 브랜드 패널 -->
         <Border Grid.Column="0" Background="{StaticResource NavIconBgBrush}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <TextBlock Text="⬡" FontSize="64" Foreground="{StaticResource AccentBlueLightBrush}"
@@ -26,7 +25,6 @@
                            Foreground="{StaticResource NavIconFgBrush}" Opacity="0.6"
                            HorizontalAlignment="Center" Margin="0,6,0,0"/>
 
-                <!-- 하단 feature 목록 -->
                 <StackPanel Margin="0,48,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                         <TextBlock Text="✓" Foreground="{StaticResource AccentBlueLightBrush}"
@@ -52,154 +50,94 @@
 
         <!-- 우측: 로그인 폼 -->
         <Border Grid.Column="1" Background="{StaticResource ContentBgBrush}">
-            <StackPanel Width="400" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <StackPanel Width="360" VerticalAlignment="Center" HorizontalAlignment="Center">
 
-                <TextBlock Text="사용자 역할 선택" FontSize="24" FontWeight="Bold"
+                <TextBlock Text="로그인" FontSize="26" FontWeight="Bold"
                            Foreground="{StaticResource TextPrimaryBrush}"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="업무에 맞는 역할을 선택하여 시작하세요"
+                <TextBlock Text="아이디와 비밀번호를 입력하세요"
                            FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
                            HorizontalAlignment="Center" Margin="0,6,0,32"/>
 
-                <!-- 운전자 카드 -->
-                <Border Margin="0,0,0,10" CornerRadius="8"
-                        BorderThickness="1" Cursor="Hand">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource CardBgBrush}"/>
-                            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-                            <Setter Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect Color="#18000000" BlurRadius="6" ShadowDepth="1" Opacity="0.5"/>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="BorderBrush" Value="{StaticResource StatusGoodBrush}"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <Border.InputBindings>
-                        <MouseBinding MouseAction="LeftClick" Command="{Binding LoginAsOperatorCommand}"/>
-                    </Border.InputBindings>
-                    <Grid Margin="20,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="52"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="22"
-                                Background="{StaticResource StatusGoodBrush}">
-                            <TextBlock Text="OP" FontSize="14" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="운전자 (Operator)" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="즉시 판단 · 경보 중심 · 낮은 화면 밀도"
-                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                                       Margin="0,3,0,0"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="›" FontSize="22"
-                                   Foreground="{StaticResource TextDisabledBrush}"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
+                <!-- 아이디 -->
+                <TextBlock Text="아이디" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
+                        CornerRadius="8" Background="{StaticResource InputBgBrush}" Margin="0,0,0,14">
+                    <TextBox x:Name="UsernameBox"
+                             Text="{Binding LoginUsername, UpdateSourceTrigger=PropertyChanged}"
+                             BorderThickness="0" Padding="12,10" FontSize="14"
+                             Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
+                             KeyDown="Input_KeyDown"/>
                 </Border>
 
-                <!-- 정비담당자 카드 -->
-                <Border Margin="0,0,0,10" CornerRadius="8"
-                        BorderThickness="1" Cursor="Hand">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource CardBgBrush}"/>
-                            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-                            <Setter Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect Color="#18000000" BlurRadius="6" ShadowDepth="1" Opacity="0.5"/>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="BorderBrush" Value="{StaticResource StatusWarningBrush}"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <Border.InputBindings>
-                        <MouseBinding MouseAction="LeftClick" Command="{Binding LoginAsMaintenanceCommand}"/>
-                    </Border.InputBindings>
-                    <Grid Margin="20,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="52"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="22"
-                                Background="{StaticResource StatusWarningBrush}">
-                            <TextBlock Text="MT" FontSize="14" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="정비담당자 (Maintenance)" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Trend 분석 · 이력 추적 · 중간 화면 밀도"
-                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                                       Margin="0,3,0,0"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="›" FontSize="22"
-                                   Foreground="{StaticResource TextDisabledBrush}"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
+                <!-- 비밀번호 -->
+                <TextBlock Text="비밀번호" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
+                        CornerRadius="8" Background="{StaticResource InputBgBrush}" Margin="0,0,0,8">
+                    <PasswordBox x:Name="PwdBox"
+                                 BorderThickness="0" Padding="12,10" FontSize="14"
+                                 Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
+                                 PasswordChanged="PwdBox_PasswordChanged"
+                                 KeyDown="Input_KeyDown"/>
                 </Border>
 
-                <!-- 진단전문가 카드 -->
-                <Border CornerRadius="8" BorderThickness="1" Cursor="Hand">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource CardBgBrush}"/>
-                            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-                            <Setter Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect Color="#18000000" BlurRadius="6" ShadowDepth="1" Opacity="0.5"/>
-                                </Setter.Value>
-                            </Setter>
+                <!-- 오류 메시지 -->
+                <TextBlock Text="{Binding LoginError}"
+                           FontSize="12" Foreground="{StaticResource StatusDangerBrush}"
+                           Margin="0,0,0,16" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible"/>
                             <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBlueBrush}"/>
-                                </Trigger>
+                                <DataTrigger Binding="{Binding LoginError}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Border.Style>
-                    <Border.InputBindings>
-                        <MouseBinding MouseAction="LeftClick" Command="{Binding LoginAsExpertCommand}"/>
-                    </Border.InputBindings>
-                    <Grid Margin="20,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="52"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="22"
-                                Background="{StaticResource AccentBlueBrush}">
-                            <TextBlock Text="EX" FontSize="14" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="진단전문가 (Expert)" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="고급 Plot · 정밀 진단 · 높은 화면 밀도"
-                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                                       Margin="0,3,0,0"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="›" FontSize="22"
-                                   Foreground="{StaticResource TextDisabledBrush}"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- 로그인 버튼 -->
+                <Button Command="{Binding LoginCommand}"
+                        Padding="0,14" Margin="0,8,0,0" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bg" Background="{StaticResource AccentBlueBrush}"
+                                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <Grid>
+                                    <!-- 로딩 중 -->
+                                    <TextBlock Text="로그인 중..." FontSize="15" FontWeight="SemiBold"
+                                               Foreground="White" HorizontalAlignment="Center"
+                                               Visibility="{Binding IsLoginBusy, Converter={StaticResource BoolToVis}}"/>
+                                    <!-- 기본 -->
+                                    <TextBlock Text="로그인" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="White" HorizontalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsLoginBusy}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="#155FAD"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="bg" Property="Background" Value="{StaticResource TextDisabledBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
 
                 <TextBlock Text="© 2026 ㈜오토시스. All rights reserved."
                            FontSize="11" Foreground="{StaticResource TextDisabledBrush}"

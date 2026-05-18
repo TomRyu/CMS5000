@@ -9,6 +9,7 @@
                 <ResourceDictionary Source="/Themes/Styles.xaml"/>
                 <ResourceDictionary Source="/Themes/MdiChildStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

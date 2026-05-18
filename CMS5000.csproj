@@ -13,10 +13,15 @@
 
   <ItemGroup>
     <PackageReference Include="Velopack" Version="0.*"/>
+    <PackageReference Include="supabase-csharp" Version="0.*"/>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.*"/>
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="CMS5000.ico"/>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

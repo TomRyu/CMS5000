@@ -9,6 +9,8 @@
         xmlns:opVm="clr-namespace:CMS5000.ViewModels.Operator"
         xmlns:mtVm="clr-namespace:CMS5000.ViewModels.Maintenance"
         xmlns:exVm="clr-namespace:CMS5000.ViewModels.Expert"
+        xmlns:adVm="clr-namespace:CMS5000.ViewModels"
+        xmlns:adView="clr-namespace:CMS5000.Views.Admin"
         xmlns:models="clr-namespace:CMS5000.Models"
         Title="CMS-5000 | ㈜오토시스"
         Icon="pack://application:,,,/CMS5000.ico"
@@ -27,6 +29,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type exVm:ExpertViewModel}">
             <exView:ExpertMainView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type adVm:AdminViewModel}">
+            <adView:AdminView DataContext="{Binding}"/>
         </DataTemplate>
 
         <!-- NavNode status dot converter (inline style trigger) -->
@@ -114,6 +119,48 @@
                     <!-- 하단 고정 영역 -->
                     <StackPanel DockPanel.Dock="Bottom">
                         <Rectangle Height="1" Fill="#22FFFFFF" Margin="10,6"/>
+
+                        <!-- 관리자 (Admin 역할일 때만 표시) -->
+                        <Button Width="72" Height="66" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Admin"
+                                ToolTip="사용자 관리">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAdminRole}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE7EF;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="사용자" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Admin">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
 
                         <!-- 설정 -->
                         <Button Width="72" Height="66" Cursor="Hand"

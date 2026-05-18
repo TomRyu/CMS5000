@@ -1,4 +1,4 @@
-name: ClickOnce 배포
+name: 빌드 및 배포
 
 on:
   push:
@@ -21,26 +21,42 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: VS MSBuild 설정
-        uses: microsoft/setup-msbuild@v2
-
-      - name: 의존성 복원
-        run: dotnet restore CMS5000.csproj
-
-      - name: ClickOnce 게시
+      - name: 자립실행 단일 EXE 빌드
         run: |
-          msbuild CMS5000.csproj /t:Publish `
-            /p:Configuration=Release `
-            /p:PublishProfile=Properties/PublishProfiles/ClickOnceProfile.pubxml `
-            /p:ApplicationRevision=${{ github.run_number }}
+          dotnet publish CMS5000.csproj -c Release -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:PublishTrimmed=false `
+            -p:PublishReadyToRun=true `
+            -o dist
 
-      - name: 설치 페이지 복사
-        run: Copy-Item installer/index.html publish/index.html
+      - name: 버전 태그 생성
+        id: version
+        run: echo "tag=v1.0.${{ github.run_number }}" >> $env:GITHUB_OUTPUT
 
-      - name: GitHub Pages 배포
+      - name: GitHub Release 생성 및 EXE 첨부
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "CMS-5000 ${{ steps.version.outputs.tag }}"
+          draft: false
+          prerelease: false
+          files: dist/CMS5000.exe
+          body: |
+            ## CMS-5000 ${{ steps.version.outputs.tag }}
+
+            ### 설치 방법
+            1. 아래 **CMS5000.exe** 를 다운로드합니다
+            2. 원하는 위치에 저장합니다
+            3. 더블클릭으로 실행합니다 (별도 설치 불필요)
+
+            > Windows 10 이상 필요 · .NET 런타임 불필요 (자립실행 패키지)
+
+      - name: 설치 안내 페이지 배포 (GitHub Pages)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: publish
+          publish_dir: installer
           force_orphan: true
-          commit_message: "배포 #${{ github.run_number }} (${{ github.sha }})"
+          commit_message: "페이지 업데이트 #${{ github.run_number }}"

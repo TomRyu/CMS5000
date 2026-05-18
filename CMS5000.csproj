@@ -15,4 +15,8 @@
     <PackageReference Include="Velopack" Version="0.*"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="CMS5000.ico"/>
+  </ItemGroup>
+
 </Project>

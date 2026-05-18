@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <!-- Velopack: WPF 자동생성 Main 대신 Program.cs의 Main 사용 -->
     <StartupObject>CMS5000.Program</StartupObject>
+    <ApplicationIcon>CMS5000.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

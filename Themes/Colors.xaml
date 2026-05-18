@@ -1,0 +1,103 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== Icon Sidebar (Dark Navy) ===== -->
+    <Color x:Key="NavIconBgColor">#FF1B2A3C</Color>
+    <Color x:Key="NavIconHoverColor">#FF1A4A8A</Color>
+    <Color x:Key="NavIconActiveColor">#FF2D4260</Color>
+    <Color x:Key="NavIconFgColor">#FF7B9ABF</Color>
+    <Color x:Key="NavIconActiveFgColor">#FF5BAAFF</Color>
+
+    <!-- ===== Tree Panel (Light) ===== -->
+    <Color x:Key="TreePanelBgColor">#FFF4F6F9</Color>
+    <Color x:Key="TreeItemHoverColor">#FFE8EDF5</Color>
+    <Color x:Key="TreeItemSelectedColor">#FF2E7FD4</Color>
+    <Color x:Key="TreeItemSelectedFgColor">#FFFFFFFF</Color>
+    <Color x:Key="TreePanelHeaderColor">#FFEBEFF5</Color>
+    <Color x:Key="TreePanelBorderColor">#FFD5DCE8</Color>
+
+    <!-- ===== Header Bar ===== -->
+    <Color x:Key="HeaderBgColor">#FFFFFFFF</Color>
+    <Color x:Key="HeaderBorderColor">#FFE0E5EE</Color>
+    <Color x:Key="HeaderAccentColor">#FF1B6CC8</Color>
+
+    <!-- ===== Content Area ===== -->
+    <Color x:Key="ContentBgColor">#FFF0F3F8</Color>
+    <Color x:Key="CardBgColor">#FFFFFFFF</Color>
+    <Color x:Key="CardBorderColor">#FFE0E5EE</Color>
+    <Color x:Key="CardShadowColor">#18000000</Color>
+
+    <!-- ===== Text ===== -->
+    <Color x:Key="TextPrimaryColor">#FF1C2B3A</Color>
+    <Color x:Key="TextSecondaryColor">#FF5A7080</Color>
+    <Color x:Key="TextDisabledColor">#FFAAB8C8</Color>
+    <Color x:Key="TextLinkColor">#FF1B6CC8</Color>
+
+    <!-- ===== Status ===== -->
+    <Color x:Key="StatusGoodColor">#FF2ECC71</Color>
+    <Color x:Key="StatusWarningColor">#FFF39C12</Color>
+    <Color x:Key="StatusDangerColor">#FFE74C3C</Color>
+    <Color x:Key="StatusOfflineColor">#FF95A5A6</Color>
+
+    <!-- ===== Accent ===== -->
+    <Color x:Key="AccentBlueColor">#FF1B6CC8</Color>
+    <Color x:Key="AccentBlueLightColor">#FF3A8FE8</Color>
+    <Color x:Key="AccentBluePaleColor">#FFE8F0FB</Color>
+
+    <!-- ===== Input ===== -->
+    <Color x:Key="InputBgColor">#FFFFFFFF</Color>
+    <Color x:Key="InputBorderColor">#FFCCD4E0</Color>
+    <Color x:Key="InputFocusBorderColor">#FF1B6CC8</Color>
+
+    <!-- ========== Brushes ========== -->
+    <SolidColorBrush x:Key="NavIconBgBrush"        Color="{StaticResource NavIconBgColor}"/>
+    <SolidColorBrush x:Key="NavIconHoverBrush"     Color="{StaticResource NavIconHoverColor}"/>
+    <SolidColorBrush x:Key="NavIconActiveBrush"    Color="{StaticResource NavIconActiveColor}"/>
+    <SolidColorBrush x:Key="NavIconFgBrush"        Color="{StaticResource NavIconFgColor}"/>
+    <SolidColorBrush x:Key="NavIconActiveFgBrush"  Color="{StaticResource NavIconActiveFgColor}"/>
+
+    <SolidColorBrush x:Key="TreePanelBgBrush"      Color="{StaticResource TreePanelBgColor}"/>
+    <SolidColorBrush x:Key="TreeItemHoverBrush"    Color="{StaticResource TreeItemHoverColor}"/>
+    <SolidColorBrush x:Key="TreeItemSelectedBrush" Color="{StaticResource TreeItemSelectedColor}"/>
+    <SolidColorBrush x:Key="TreePanelHeaderBrush"  Color="{StaticResource TreePanelHeaderColor}"/>
+    <SolidColorBrush x:Key="TreePanelBorderBrush"  Color="{StaticResource TreePanelBorderColor}"/>
+
+    <SolidColorBrush x:Key="HeaderBgBrush"         Color="{StaticResource HeaderBgColor}"/>
+    <SolidColorBrush x:Key="HeaderBorderBrush"     Color="{StaticResource HeaderBorderColor}"/>
+    <SolidColorBrush x:Key="HeaderAccentBrush"     Color="{StaticResource HeaderAccentColor}"/>
+
+    <SolidColorBrush x:Key="ContentBgBrush"        Color="{StaticResource ContentBgColor}"/>
+    <SolidColorBrush x:Key="CardBgBrush"           Color="{StaticResource CardBgColor}"/>
+    <SolidColorBrush x:Key="CardBorderBrush"       Color="{StaticResource CardBorderColor}"/>
+
+    <SolidColorBrush x:Key="TextPrimaryBrush"      Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush"    Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextDisabledBrush"     Color="{StaticResource TextDisabledColor}"/>
+    <SolidColorBrush x:Key="TextLinkBrush"         Color="{StaticResource TextLinkColor}"/>
+
+    <SolidColorBrush x:Key="StatusGoodBrush"       Color="{StaticResource StatusGoodColor}"/>
+    <SolidColorBrush x:Key="StatusWarningBrush"    Color="{StaticResource StatusWarningColor}"/>
+    <SolidColorBrush x:Key="StatusDangerBrush"     Color="{StaticResource StatusDangerColor}"/>
+    <SolidColorBrush x:Key="StatusOfflineBrush"    Color="{StaticResource StatusOfflineColor}"/>
+
+    <SolidColorBrush x:Key="AccentBlueBrush"       Color="{StaticResource AccentBlueColor}"/>
+    <SolidColorBrush x:Key="AccentBlueLightBrush"  Color="{StaticResource AccentBlueLightColor}"/>
+    <SolidColorBrush x:Key="AccentBluePaleBrush"   Color="{StaticResource AccentBluePaleColor}"/>
+
+    <SolidColorBrush x:Key="InputBgBrush"          Color="{StaticResource InputBgColor}"/>
+    <SolidColorBrush x:Key="InputBorderBrush"      Color="{StaticResource InputBorderColor}"/>
+    <SolidColorBrush x:Key="InputFocusBorderBrush" Color="{StaticResource InputFocusBorderColor}"/>
+
+    <!-- Legacy aliases (used in Views) -->
+    <SolidColorBrush x:Key="BackgroundDarkBrush"   Color="{StaticResource ContentBgColor}"/>
+    <SolidColorBrush x:Key="BackgroundMediumBrush" Color="{StaticResource TreePanelBgColor}"/>
+    <SolidColorBrush x:Key="BackgroundLightBrush"  Color="{StaticResource InputBgColor}"/>
+    <SolidColorBrush x:Key="BackgroundPanelBrush"  Color="{StaticResource CardBgColor}"/>
+    <SolidColorBrush x:Key="BackgroundHoverBrush"  Color="{StaticResource TreeItemHoverColor}"/>
+    <SolidColorBrush x:Key="BorderBrush"           Color="{StaticResource CardBorderColor}"/>
+    <SolidColorBrush x:Key="BorderFocusBrush"      Color="{StaticResource InputFocusBorderColor}"/>
+    <SolidColorBrush x:Key="AccentBlueLightBrush2" Color="{StaticResource AccentBlueLightColor}"/>
+    <SolidColorBrush x:Key="StatusNormalBrush"     Color="{StaticResource StatusGoodColor}"/>
+    <SolidColorBrush x:Key="TextDisabledBrush2"    Color="{StaticResource TextDisabledColor}"/>
+
+</ResourceDictionary>

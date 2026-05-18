@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMS-5000 설치 | ㈜오토시스</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: #F0F3F8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+      padding: 48px 56px;
+      max-width: 560px;
+      width: 100%;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      background: #1B2A3C;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #5BAAFF;
+    }
+    .brand-name { font-size: 22px; font-weight: 700; color: #1B2A3C; }
+    .brand-sub  { font-size: 12px; color: #7B9ABF; margin-top: 2px; }
+    h1 { font-size: 28px; font-weight: 700; color: #1C2B3A; margin-bottom: 8px; }
+    .desc { color: #5A7190; font-size: 14px; line-height: 1.6; margin-bottom: 32px; }
+    .btn-install {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: #1B6CC8;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+      margin-bottom: 12px;
+    }
+    .btn-install:hover { background: #155FAD; }
+    .btn-setup {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #F0F3F8;
+      color: #1B6CC8;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s;
+      margin-bottom: 28px;
+    }
+    .btn-setup:hover { background: #E2E9F4; }
+    .steps { margin-bottom: 28px; }
+    .steps h3 { font-size: 13px; color: #7B9ABF; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .step-num {
+      min-width: 24px;
+      height: 24px;
+      background: #EEF4FF;
+      border-radius: 50%;
+      color: #1B6CC8;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-text { font-size: 13px; color: #3A5070; line-height: 1.5; padding-top: 3px; }
+    .footer { font-size: 11px; color: #9BAFC4; text-align: center; }
+    .footer a { color: #1B6CC8; text-decoration: none; }
+    .tag {
+      display: inline-block;
+      background: #EEF4FF;
+      color: #1B6CC8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <div>
+        <div class="brand-name">CMS-5000</div>
+        <div class="brand-sub">Condition Monitoring System · ㈜오토시스</div>
+      </div>
+    </div>
+
+    <span class="tag">Windows 전용</span>
+    <h1>클릭 한 번으로 설치</h1>
+    <p class="desc">
+      설비 상태 모니터링, Trend·Spectrum·Waterfall 분석,<br>
+      역할별 맞춤 화면을 제공하는 CMS-5000을 설치합니다.
+    </p>
+
+    <a class="btn-install" href="CMS5000.application">⬇ 지금 설치 (ClickOnce)</a>
+    <a class="btn-setup"   href="setup.exe">setup.exe 직접 다운로드</a>
+
+    <div class="steps">
+      <h3>설치 방법</h3>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text"><b>지금 설치</b> 버튼을 클릭합니다.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">보안 경고 창이 뜨면 <b>설치</b>를 클릭합니다.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">설치가 완료되면 CMS-5000이 자동으로 실행됩니다.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">이후 업데이트는 앱 실행 시 <b>자동으로 적용</b>됩니다.</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Windows 10 이상 필요 · .NET 런타임 불필요 (포함)<br><br>
+      <a href="https://github.com/TomRyu/CMS5000">GitHub 저장소</a> &nbsp;·&nbsp;
+      © 2026 ㈜오토시스
+    </div>
+  </div>
+</body>
+</html>

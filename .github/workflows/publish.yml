@@ -1,0 +1,43 @@
+name: ClickOnce 배포
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: .NET 9 설정
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: 의존성 복원
+        run: dotnet restore CMS5000.csproj
+
+      - name: ClickOnce 게시
+        run: |
+          dotnet publish CMS5000.csproj `
+            -c Release `
+            /p:PublishProfile=Properties/PublishProfiles/ClickOnceProfile.pubxml `
+            /p:ApplicationRevision=${{ github.run_number }}
+
+      - name: 설치 페이지 복사
+        run: Copy-Item installer/index.html publish/index.html
+
+      - name: GitHub Pages 배포
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: publish
+          force_orphan: true
+          commit_message: "배포 #${{ github.run_number }} (${{ github.sha }})"

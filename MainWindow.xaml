@@ -1,0 +1,621 @@
+<Window x:Class="CMS5000.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:CMS5000.ViewModels"
+        xmlns:opView="clr-namespace:CMS5000.Views.Operator"
+        xmlns:mtView="clr-namespace:CMS5000.Views.Maintenance"
+        xmlns:exView="clr-namespace:CMS5000.Views.Expert"
+        xmlns:shellView="clr-namespace:CMS5000.Views.Shell"
+        xmlns:opVm="clr-namespace:CMS5000.ViewModels.Operator"
+        xmlns:mtVm="clr-namespace:CMS5000.ViewModels.Maintenance"
+        xmlns:exVm="clr-namespace:CMS5000.ViewModels.Expert"
+        xmlns:models="clr-namespace:CMS5000.Models"
+        Title="CMS-5000 | ㈜오토시스"
+        Height="900" Width="1440"
+        MinHeight="700" MinWidth="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource ContentBgBrush}"
+        WindowStyle="SingleBorderWindow">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type opVm:OperatorViewModel}">
+            <opView:OperatorMainView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type mtVm:MaintenanceViewModel}">
+            <mtView:MaintenanceMainView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type exVm:ExpertViewModel}">
+            <exView:ExpertMainView DataContext="{Binding}"/>
+        </DataTemplate>
+
+        <!-- NavNode status dot converter (inline style trigger) -->
+        <Style x:Key="StatusDotStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- Root: Login 화면 or Main Shell -->
+    <Grid>
+        <!-- ===== LOGIN VIEW ===== -->
+        <shellView:LoginView DataContext="{Binding}">
+            <shellView:LoginView.Style>
+                <Style TargetType="shellView:LoginView">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsLoginVisible}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </shellView:LoginView.Style>
+        </shellView:LoginView>
+
+        <!-- ===== MAIN SHELL ===== -->
+        <Grid>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsLoginVisible}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="72"/>   <!-- Col 0: Icon strip -->
+                <ColumnDefinition>               <!-- Col 1: Tree panel (collapsible) -->
+                    <ColumnDefinition.Style>
+                        <Style TargetType="ColumnDefinition">
+                            <Setter Property="Width" Value="220"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsTreePanelVisible}" Value="False">
+                                    <Setter Property="Width" Value="0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ColumnDefinition.Style>
+                </ColumnDefinition>
+                <ColumnDefinition Width="*"/>    <!-- Col 2: Main content -->
+            </Grid.ColumnDefinitions>
+
+            <!-- COL 0 : ICON STRIP -->
+            <Border Grid.Column="0" Background="{StaticResource NavIconBgBrush}"
+                    Panel.ZIndex="10" Width="72">
+                <Border.Resources>
+                    <!-- 공통 네비 버튼 템플릿 매크로 (각 버튼에서 인라인 사용) -->
+                    <Style x:Key="NavBtnBase" TargetType="Button">
+                        <Setter Property="Width" Value="72"/>
+                        <Setter Property="Height" Value="72"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Foreground" Value="#99FFFFFF"/>
+                    </Style>
+                </Border.Resources>
+
+                <DockPanel LastChildFill="False">
+
+                    <!-- 로고 -->
+                    <Border DockPanel.Dock="Top" Height="52"
+                            Background="{StaticResource NavIconActiveBrush}"
+                            BorderBrush="#22FFFFFF" BorderThickness="0,0,0,1">
+                        <TextBlock Text="CMS-5000" FontSize="11" FontWeight="Bold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- 하단 고정 영역 -->
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <Rectangle Height="1" Fill="#22FFFFFF" Margin="10,6"/>
+
+                        <!-- 설정 -->
+                        <Button Width="72" Height="66" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Settings"
+                                ToolTip="설정">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE713;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="설정" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Settings">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                    </StackPanel>
+
+                    <!-- 메인 메뉴 -->
+                    <StackPanel DockPanel.Dock="Top" Margin="0,4,0,0">
+
+                        <!-- 대시보드 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Dashboard"
+                                ToolTip="대시보드">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE80F;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="대시보드" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Dashboard">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 설비 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Equipment"
+                                ToolTip="설비">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE950;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="설비" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Equipment">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 알람 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Alarm"
+                                ToolTip="알람">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xEA8F;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="알람" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Alarm">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 분석 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Analysis"
+                                ToolTip="분석">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE9D2;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="분석" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Analysis">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 진단 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Diagnosis"
+                                ToolTip="진단">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xECAD;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="진단" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Diagnosis">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 점검/이력 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Inspection"
+                                ToolTip="점검/이력">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE9D5;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="점검/이력" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Inspection">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 보고서 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Report"
+                                ToolTip="보고서">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE7C3;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="보고서" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Report">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ====================================================
+                 COL 1 : TREE NAV PANEL (light)
+                 ==================================================== -->
+            <Border Grid.Column="1" Background="{StaticResource TreePanelBgBrush}"
+                    BorderBrush="{StaticResource TreePanelBorderBrush}" BorderThickness="0,0,1,0"
+                    ClipToBounds="True">
+                <DockPanel>
+                    <!-- Panel Header -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{StaticResource TreePanelHeaderBrush}"
+                            BorderBrush="{StaticResource TreePanelBorderBrush}"
+                            BorderThickness="0,0,0,1" Padding="10,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Database Name"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}"
+                                    Command="{Binding ToggleTreeCommand}"
+                                    Padding="4,2" BorderThickness="0" Background="Transparent"
+                                    ToolTip="패널 닫기">
+                                <TextBlock Text="◀" FontSize="10"
+                                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Search -->
+                    <Border DockPanel.Dock="Top" Padding="8,6"
+                            BorderBrush="{StaticResource TreePanelBorderBrush}" BorderThickness="0,0,0,1">
+                        <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Background="{StaticResource InputBgBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="🔍" FontSize="11"
+                                           VerticalAlignment="Center" Margin="6,0,4,0"
+                                           Foreground="{StaticResource TextDisabledBrush}"/>
+                                <TextBox Grid.Column="1" BorderThickness="0" FontSize="12"
+                                         Background="Transparent" Padding="0,5,6,5"
+                                         Text="" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </Grid>
+                        </Border>
+                    </Border>
+
+                    <!-- Tree View -->
+                    <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <TreeView ItemsSource="{Binding NavTree}" Margin="4,4">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                        <!-- Status dot -->
+                                        <Ellipse>
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDotStyle}">
+                                                    <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Warning">
+                                                            <Setter Property="Fill" Value="{StaticResource StatusWarningBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Danger">
+                                                            <Setter Property="Fill" Value="{StaticResource StatusDangerBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Offline">
+                                                            <Setter Property="Fill" Value="{StaticResource StatusOfflineBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding Name}" FontSize="12"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- ====================================================
+                 COL 2 : MAIN CONTENT
+                 ==================================================== -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="52"/>  <!-- Header bar -->
+                    <RowDefinition Height="*"/>   <!-- Content -->
+                </Grid.RowDefinitions>
+
+                <!-- HEADER BAR -->
+                <Border Grid.Row="0" Background="{StaticResource HeaderBgBrush}"
+                        BorderBrush="{StaticResource HeaderBorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid Margin="16,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Tree 토글 + CMS5000 로고 -->
+                        <Button Grid.Column="0" Style="{StaticResource FlatButtonStyle}"
+                                Command="{Binding ToggleTreeCommand}"
+                                BorderThickness="0" Background="Transparent"
+                                Padding="4" Margin="0,0,8,0" ToolTip="메뉴 토글">
+                            <TextBlock Text="☰" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⬡" FontSize="18" Foreground="{StaticResource AccentBlueBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="CMS" FontSize="17" FontWeight="Bold"
+                                       Foreground="{StaticResource AccentBlueBrush}"/>
+                            <TextBlock Text="5000" FontSize="17" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <!-- 역할 태그 -->
+                        <Border Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                Background="{StaticResource AccentBluePaleBrush}"
+                                BorderBrush="{StaticResource AccentBlueLightBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="10,3" Margin="16,0,0,0">
+                            <TextBlock Text="{Binding SelectedRoleName}" FontSize="11"
+                                       Foreground="{StaticResource AccentBlueBrush}" FontWeight="SemiBold"/>
+                        </Border>
+
+                        <!-- 우측: 알림 + 검색 + 로그아웃 -->
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- 경고 알림 (Warning) -->
+                            <Grid Margin="0,0,8,0">
+                                <Button Style="{StaticResource FlatButtonStyle}"
+                                        BorderThickness="0" Background="Transparent" Padding="6,4"
+                                        Command="{Binding ShowAlarmDetailCommand}"
+                                        CommandParameter="Warning"
+                                        ToolTip="경고 설비 보기">
+                                    <TextBlock Text="🔔" FontSize="16"/>
+                                </Button>
+                                <Border Background="{StaticResource StatusWarningBrush}"
+                                        CornerRadius="8" Width="16" Height="16"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Margin="0,-2,-2,0" IsHitTestVisible="False">
+                                    <TextBlock Text="{Binding NotificationCount}" FontSize="9"
+                                               Foreground="White" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <!-- 위험 알림 (Danger) -->
+                            <Grid Margin="0,0,8,0">
+                                <Button Style="{StaticResource FlatButtonStyle}"
+                                        BorderThickness="0" Background="Transparent" Padding="6,4"
+                                        Command="{Binding ShowAlarmDetailCommand}"
+                                        CommandParameter="Danger"
+                                        ToolTip="위험 설비 보기">
+                                    <TextBlock Text="🚨" FontSize="16"/>
+                                </Button>
+                                <Border Background="{StaticResource StatusDangerBrush}"
+                                        CornerRadius="8" Width="16" Height="16"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Margin="0,-2,-2,0" IsHitTestVisible="False">
+                                    <TextBlock Text="{Binding AlertCount}" FontSize="9"
+                                               Foreground="White" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <!-- 시간 -->
+                            <TextBlock Text="{Binding CurrentTime}" FontSize="11" FontFamily="Consolas"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <!-- 사용자 아바타 + 이름 + 로그아웃 -->
+                            <Border CornerRadius="6" Padding="8,4" Cursor="Hand"
+                                    ToolTip="클릭하여 로그아웃">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding LogoutCommand}"/>
+                                </Border.InputBindings>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="30" Height="30" CornerRadius="15"
+                                            Background="{StaticResource AccentBlueBrush}"
+                                            BorderBrush="{StaticResource AccentBlueLightBrush}"
+                                            BorderThickness="1.5">
+                                        <TextBlock Text="{Binding SelectedRoleName[0], FallbackValue='U'}"
+                                                   FontSize="13" FontWeight="Bold" Foreground="White"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Margin="8,0,6,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedRoleName}"
+                                                   FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="로그아웃" FontSize="10"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" Foreground="{StaticResource TextDisabledBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- CONTENT AREA -->
+                <Grid Grid.Row="1" Background="{StaticResource ContentBgBrush}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>  <!-- Breadcrumb -->
+                        <RowDefinition Height="*"/>     <!-- Main View -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Breadcrumb -->
+                    <Border Grid.Row="0" Background="{StaticResource HeaderBgBrush}"
+                            BorderBrush="{StaticResource HeaderBorderBrush}" BorderThickness="0,0,0,1"
+                            Padding="16,7">
+                        <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}">
+                            <Run Text="{Binding Breadcrumb}"/>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- Role View -->
+                    <ContentPresenter Grid.Row="1" Content="{Binding CurrentView}"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

@@ -24,6 +24,17 @@ jobs:
       - name: Velopack CLI(vpk) 설치
         run: dotnet tool install -g vpk
 
+      - name: appsettings.json 생성 (Secrets → 파일)
+        run: |
+          @"
+          {
+            "Supabase": {
+              "Url": "${{ secrets.SUPABASE_URL }}",
+              "ServiceRoleKey": "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+            }
+          }
+          "@ | Out-File -FilePath appsettings.json -Encoding utf8
+
       - name: 의존성 복원
         run: dotnet restore CMS5000.csproj
 

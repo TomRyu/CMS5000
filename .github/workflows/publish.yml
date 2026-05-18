@@ -48,6 +48,7 @@ jobs:
             --packDir  dist `
             --mainExe  CMS5000.exe `
             --packTitle "CMS-5000 설비 상태 모니터링" `
+            --icon     CMS5000.ico `
             --outputDir releases
 
       - name: GitHub Release 생성 및 패키지 첨부

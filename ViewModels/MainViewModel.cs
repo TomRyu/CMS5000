@@ -289,6 +289,13 @@ public class MainViewModel : ViewModelBase
             var current = mgr.CurrentVersion;
             if (current != null)
                 WindowTitle = $"CMS-5000 v{current} | ㈜오토시스";
+            else
+            {
+                // Velopack 미설치 실행(개발/직접 실행) 시 어셈블리 버전으로 표시
+                var asm = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version;
+                if (asm != null)
+                    WindowTitle = $"CMS-5000 v{asm.Major}.{asm.Minor}.{asm.Build} | ㈜오토시스";
+            }
 
             var update = await mgr.CheckForUpdatesAsync();
             if (update == null)

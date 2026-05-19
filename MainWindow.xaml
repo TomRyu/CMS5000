@@ -196,8 +196,18 @@
 
                     </StackPanel>
 
-                    <!-- 메인 메뉴 -->
+                    <!-- 메인 메뉴 (Admin일 때 숨김) -->
                     <StackPanel DockPanel.Dock="Top" Margin="0,4,0,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAdminRole}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
 
                         <!-- 대시보드 -->
                         <Button Width="72" Height="72" Cursor="Hand"

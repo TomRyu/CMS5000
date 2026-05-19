@@ -11,6 +11,8 @@
         xmlns:exVm="clr-namespace:CMS5000.ViewModels.Expert"
         xmlns:adVm="clr-namespace:CMS5000.ViewModels"
         xmlns:adView="clr-namespace:CMS5000.Views.Admin"
+        xmlns:stVm="clr-namespace:CMS5000.ViewModels.Settings"
+        xmlns:stView="clr-namespace:CMS5000.Views.Settings"
         xmlns:models="clr-namespace:CMS5000.Models"
         Title="CMS-5000 | ㈜오토시스"
         Icon="pack://application:,,,/CMS5000.ico"
@@ -32,6 +34,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type adVm:AdminViewModel}">
             <adView:AdminView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type stVm:SettingsViewModel}">
+            <stView:SettingsView DataContext="{Binding}"/>
         </DataTemplate>
 
         <!-- NavNode status dot converter (inline style trigger) -->

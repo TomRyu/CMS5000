@@ -9,6 +9,7 @@ using CMS5000.ViewModels.Base;
 using CMS5000.ViewModels.Expert;
 using CMS5000.ViewModels.Maintenance;
 using CMS5000.ViewModels.Operator;
+using CMS5000.ViewModels.Settings;
 using Velopack;
 using Velopack.Sources;
 
@@ -60,6 +61,7 @@ public class MainViewModel : ViewModelBase
     public MaintenanceViewModel MaintenanceVM { get; } = new();
     public ExpertViewModel      ExpertVM      { get; } = new();
     public AdminViewModel       AdminVM       { get; } = new();
+    public SettingsViewModel    SettingsVM    { get; } = new();
 
     public ObservableCollection<NavNode> NavTree { get; } = [];
 
@@ -82,6 +84,8 @@ public class MainViewModel : ViewModelBase
             ActiveNavIcon = icon;
             if (icon == "Admin")
                 CurrentView = AdminVM;
+            else if (icon == "Settings")
+                CurrentView = SettingsVM;
         });
         ToggleTreeCommand = new RelayCommand(_ => IsTreePanelVisible = !IsTreePanelVisible);
         TogglePasswordVisibilityCommand = new RelayCommand(_ => IsPasswordVisible = !IsPasswordVisible);
@@ -142,6 +146,7 @@ public class MainViewModel : ViewModelBase
 
         ActiveNavIcon = role == UserRole.Admin ? "Admin" : "Dashboard";
         IsPasswordVisible = false;
+        SettingsVM.LoadFromCurrentUser();
 
         if (SaveCredentials)
             SaveCredentialsToFile();

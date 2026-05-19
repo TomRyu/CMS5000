@@ -1,0 +1,226 @@
+<UserControl x:Class="CMS5000.Views.Settings.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource ContentBgBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32" MaxWidth="640">
+
+            <!-- 페이지 제목 -->
+            <TextBlock Text="설정" FontSize="22" FontWeight="Bold"
+                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,24"/>
+
+            <!-- 글자 크기 카드 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="글자 크기" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="변경 즉시 적용되며 계정에 자동 저장됩니다."
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="13" Margin="0,0,0,20"/>
+
+                    <!-- 프리셋 버튼 3개 -->
+                    <StackPanel Orientation="Horizontal">
+
+                        <!-- 작게 -->
+                        <Border CornerRadius="8" BorderThickness="2" Margin="0,0,12,0" Cursor="Hand"
+                                Width="150" Padding="16,14">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
+                                    <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSmall}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick"
+                                              Command="{Binding SetFontSizeCommand}"
+                                              CommandParameter="Small"/>
+                            </Border.InputBindings>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="가" FontSize="18" FontWeight="Bold"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSmall}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="작게" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSmall}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 보통 -->
+                        <Border CornerRadius="8" BorderThickness="2" Margin="0,0,12,0" Cursor="Hand"
+                                Width="150" Padding="16,14">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
+                                    <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMedium}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick"
+                                              Command="{Binding SetFontSizeCommand}"
+                                              CommandParameter="Medium"/>
+                            </Border.InputBindings>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="가" FontSize="22" FontWeight="Bold"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMedium}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="보통" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMedium}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 크게 -->
+                        <Border CornerRadius="8" BorderThickness="2" Cursor="Hand"
+                                Width="150" Padding="16,14">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
+                                    <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLarge}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick"
+                                              Command="{Binding SetFontSizeCommand}"
+                                              CommandParameter="Large"/>
+                            </Border.InputBindings>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="가" FontSize="26" FontWeight="Bold"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsLarge}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="크게" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsLarge}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+
+                    <!-- 미리보기 -->
+                    <Border BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
+                            CornerRadius="6" Background="{StaticResource ContentBgBrush}"
+                            Padding="16,12" Margin="0,20,0,0">
+                        <StackPanel>
+                            <TextBlock Text="미리보기" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="소음·진동 측정장비 전문 기업 ㈜오토시스"
+                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="설비 상태 모니터링 · 진동 분석 · 이상 진단"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- 계정 정보 카드 -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="계정 정보" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,16"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="이름"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DisplayName}"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="아이디"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Username}"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="역할"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding RoleName}"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

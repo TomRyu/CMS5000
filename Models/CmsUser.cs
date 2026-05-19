@@ -26,4 +26,7 @@ public class CmsUser : BaseModel
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
+
+    [Column("font_size")]
+    public string FontSize { get; set; } = "Medium";
 }

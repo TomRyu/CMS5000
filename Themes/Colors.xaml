@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ===== Icon Sidebar (Dark Navy) ===== -->
     <Color x:Key="NavIconBgColor">#FF1B2A3C</Color>
@@ -87,6 +88,13 @@
     <SolidColorBrush x:Key="InputBgBrush"          Color="{StaticResource InputBgColor}"/>
     <SolidColorBrush x:Key="InputBorderBrush"      Color="{StaticResource InputBorderColor}"/>
     <SolidColorBrush x:Key="InputFocusBorderBrush" Color="{StaticResource InputFocusBorderColor}"/>
+
+    <!-- ===== Font Sizes ===== -->
+    <sys:Double x:Key="FontSizeXSmall">10</sys:Double>  <!-- 네비 레이블, 배지 (구 8) -->
+    <sys:Double x:Key="FontSizeSmall">12</sys:Double>   <!-- 섹션 타이틀, 컬럼 헤더 (구 11) -->
+    <sys:Double x:Key="FontSizeInput">14</sys:Double>   <!-- 입력, 버튼, 그리드, 트리 (구 12) -->
+    <sys:Double x:Key="FontSizeBase">15</sys:Double>    <!-- TextBlock 기본 (구 13) -->
+    <sys:Double x:Key="FontSizeLarge">18</sys:Double>   <!-- 제목류 (구 15~16) -->
 
     <!-- Legacy aliases (used in Views) -->
     <SolidColorBrush x:Key="BackgroundDarkBrush"   Color="{StaticResource ContentBgColor}"/>

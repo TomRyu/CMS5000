@@ -2,6 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:controls="clr-namespace:CMS5000.Controls">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Themes/Colors.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
     <Style TargetType="{x:Type controls:MdiChild}">
         <Setter Property="Template">
             <Setter.Value>
@@ -32,7 +36,7 @@
                                 <TextBlock Grid.Column="0"
                                            Text="{TemplateBinding Title}"
                                            Foreground="#FF1C2B3A"
-                                           FontSize="12" FontFamily="Segoe UI"
+                                           FontSize="{DynamicResource FontSizeInput}" FontFamily="Segoe UI"
                                            VerticalAlignment="Center"
                                            Margin="12,0,0,0"/>
 

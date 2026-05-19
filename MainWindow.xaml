@@ -14,7 +14,7 @@
         xmlns:stVm="clr-namespace:CMS5000.ViewModels.Settings"
         xmlns:stView="clr-namespace:CMS5000.Views.Settings"
         xmlns:models="clr-namespace:CMS5000.Models"
-        Title="CMS-5000 | ㈜오토시스"
+        Title="{Binding WindowTitle}"
         Icon="pack://application:,,,/CMS5000.ico"
         Height="900" Width="1440"
         MinHeight="700" MinWidth="1100"

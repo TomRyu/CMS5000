@@ -31,6 +31,7 @@ public class MainViewModel : ViewModelBase
     private string _loginError = "";
     private bool _isLoginBusy;
     private string _updateStatus = "";
+    private string _windowTitle = "CMS-5000 | ㈜오토시스";
     private bool _saveCredentials;
     private bool _isPasswordVisible;
 
@@ -48,6 +49,7 @@ public class MainViewModel : ViewModelBase
     public string LoginError           { get => _loginError;         set => SetProperty(ref _loginError, value); }
     public bool IsLoginBusy            { get => _isLoginBusy;        set => SetProperty(ref _isLoginBusy, value); }
     public string UpdateStatus         { get => _updateStatus;       set => SetProperty(ref _updateStatus, value); }
+    public string WindowTitle          { get => _windowTitle;        set => SetProperty(ref _windowTitle, value); }
     public bool SaveCredentials        { get => _saveCredentials;    set => SetProperty(ref _saveCredentials, value); }
     public bool IsPasswordVisible      { get => _isPasswordVisible;  set { SetProperty(ref _isPasswordVisible, value); OnPropertyChanged(nameof(IsPasswordHidden)); } }
     public bool IsPasswordHidden       => !_isPasswordVisible;
@@ -283,6 +285,11 @@ public class MainViewModel : ViewModelBase
         try
         {
             var mgr = new UpdateManager(new GithubSource("https://github.com/TomRyu/CMS5000", null, false));
+
+            var current = mgr.CurrentVersion;
+            if (current != null)
+                WindowTitle = $"CMS-5000 v{current} | ㈜오토시스";
+
             var update = await mgr.CheckForUpdatesAsync();
             if (update == null)
             {

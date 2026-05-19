@@ -305,10 +305,20 @@
                             </Button.Template>
                         </Button>
 
-                        <!-- 분석 -->
+                        <!-- 분석 (Expert만) -->
                         <Button Width="72" Height="72" Cursor="Hand"
                                 Command="{Binding SwitchNavCommand}" CommandParameter="Analysis"
                                 ToolTip="분석">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsExpertRole}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="bg" Background="Transparent">
@@ -337,10 +347,20 @@
                             </Button.Template>
                         </Button>
 
-                        <!-- 진단 -->
+                        <!-- 진단 (Maintenance + Expert) -->
                         <Button Width="72" Height="72" Cursor="Hand"
                                 Command="{Binding SwitchNavCommand}" CommandParameter="Diagnosis"
                                 ToolTip="진단">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMaintenanceOrExpert}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="bg" Background="Transparent">
@@ -369,10 +389,20 @@
                             </Button.Template>
                         </Button>
 
-                        <!-- 점검/이력 -->
+                        <!-- 점검/이력 (Maintenance + Expert) -->
                         <Button Width="72" Height="72" Cursor="Hand"
                                 Command="{Binding SwitchNavCommand}" CommandParameter="Inspection"
                                 ToolTip="점검/이력">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMaintenanceOrExpert}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="bg" Background="Transparent">

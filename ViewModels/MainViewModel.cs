@@ -1,4 +1,8 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using CMS5000.Models;
 using CMS5000.Services;
 using CMS5000.ViewModels.Base;
@@ -26,8 +30,10 @@ public class MainViewModel : ViewModelBase
     private string _loginError = "";
     private bool _isLoginBusy;
     private string _updateStatus = "";
+    private bool _saveCredentials;
+    private bool _isPasswordVisible;
 
-    public UserRole CurrentRole        { get => _currentRole;       set { SetProperty(ref _currentRole, value); OnPropertyChanged(nameof(IsAdminRole)); } }
+    public UserRole CurrentRole        { get => _currentRole;       set { SetProperty(ref _currentRole, value); OnPropertyChanged(nameof(IsAdminRole)); OnPropertyChanged(nameof(IsExpertRole)); OnPropertyChanged(nameof(IsMaintenanceOrExpert)); } }
     public object? CurrentView         { get => _currentView;        set => SetProperty(ref _currentView, value); }
     public string CurrentTime          { get => _currentTime;        set => SetProperty(ref _currentTime, value); }
     public bool IsLoginVisible         { get => _isLoginVisible;     set => SetProperty(ref _isLoginVisible, value); }
@@ -41,7 +47,12 @@ public class MainViewModel : ViewModelBase
     public string LoginError           { get => _loginError;         set => SetProperty(ref _loginError, value); }
     public bool IsLoginBusy            { get => _isLoginBusy;        set => SetProperty(ref _isLoginBusy, value); }
     public string UpdateStatus         { get => _updateStatus;       set => SetProperty(ref _updateStatus, value); }
+    public bool SaveCredentials        { get => _saveCredentials;    set => SetProperty(ref _saveCredentials, value); }
+    public bool IsPasswordVisible      { get => _isPasswordVisible;  set { SetProperty(ref _isPasswordVisible, value); OnPropertyChanged(nameof(IsPasswordHidden)); } }
+    public bool IsPasswordHidden       => !_isPasswordVisible;
     public bool IsAdminRole            => _currentRole == UserRole.Admin;
+    public bool IsExpertRole           => _currentRole == UserRole.Expert;
+    public bool IsMaintenanceOrExpert  => _currentRole == UserRole.Maintenance || _currentRole == UserRole.Expert;
     public int AlertCount              => 3;
     public int NotificationCount       => 2;
 
@@ -52,11 +63,12 @@ public class MainViewModel : ViewModelBase
 
     public ObservableCollection<NavNode> NavTree { get; } = [];
 
-    public RelayCommand LoginCommand                   { get; }
-    public RelayCommand LogoutCommand                  { get; }
-    public RelayCommand<string> SwitchNavCommand       { get; }
-    public RelayCommand ToggleTreeCommand              { get; }
-    public RelayCommand<string> ShowAlarmDetailCommand { get; }
+    public RelayCommand LoginCommand                        { get; }
+    public RelayCommand LogoutCommand                       { get; }
+    public RelayCommand<string> SwitchNavCommand            { get; }
+    public RelayCommand ToggleTreeCommand                   { get; }
+    public RelayCommand<string> ShowAlarmDetailCommand      { get; }
+    public RelayCommand TogglePasswordVisibilityCommand     { get; }
 
     private readonly System.Timers.Timer _clockTimer;
 
@@ -72,6 +84,7 @@ public class MainViewModel : ViewModelBase
                 CurrentView = AdminVM;
         });
         ToggleTreeCommand = new RelayCommand(_ => IsTreePanelVisible = !IsTreePanelVisible);
+        TogglePasswordVisibilityCommand = new RelayCommand(_ => IsPasswordVisible = !IsPasswordVisible);
         ShowAlarmDetailCommand = new RelayCommand<string>(status =>
         {
             if (IsLoginVisible || status == null) return;
@@ -88,6 +101,7 @@ public class MainViewModel : ViewModelBase
         _clockTimer.Start();
 
         BuildNavTree();
+        LoadSavedCredentials();
         _ = CheckForUpdatesAsync();
     }
 
@@ -127,7 +141,12 @@ public class MainViewModel : ViewModelBase
         };
 
         ActiveNavIcon = role == UserRole.Admin ? "Admin" : "Dashboard";
-        LoginPassword = "";
+        IsPasswordVisible = false;
+
+        if (SaveCredentials)
+            SaveCredentialsToFile();
+        else
+            DeleteSavedCredentials();
     }
 
     private void Logout()
@@ -138,6 +157,51 @@ public class MainViewModel : ViewModelBase
         LoginUsername = "";
         LoginPassword = "";
         LoginError = "";
+        IsPasswordVisible = false;
+        LoadSavedCredentials();
+    }
+
+    private static string CredentialsPath =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CMS5000", "credentials.json");
+
+    private void LoadSavedCredentials()
+    {
+        try
+        {
+            if (!File.Exists(CredentialsPath)) return;
+            var json = File.ReadAllText(CredentialsPath);
+            var data = JsonSerializer.Deserialize<SavedCredentials>(json);
+            if (data == null) return;
+            LoginUsername = data.Username;
+            var pwdBytes = ProtectedData.Unprotect(Convert.FromBase64String(data.EncryptedPassword), null, DataProtectionScope.CurrentUser);
+            LoginPassword = Encoding.UTF8.GetString(pwdBytes);
+            SaveCredentials = true;
+        }
+        catch { }
+    }
+
+    private void SaveCredentialsToFile()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(CredentialsPath)!);
+            var pwdBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(LoginPassword), null, DataProtectionScope.CurrentUser);
+            var data = new SavedCredentials { Username = LoginUsername, EncryptedPassword = Convert.ToBase64String(pwdBytes) };
+            File.WriteAllText(CredentialsPath, JsonSerializer.Serialize(data));
+        }
+        catch { }
+    }
+
+    private static void DeleteSavedCredentials()
+    {
+        try { if (File.Exists(CredentialsPath)) File.Delete(CredentialsPath); }
+        catch { }
+    }
+
+    private record SavedCredentials
+    {
+        public string Username          { get; init; } = "";
+        public string EncryptedPassword { get; init; } = "";
     }
 
     private void BuildNavTree()

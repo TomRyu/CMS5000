@@ -72,12 +72,53 @@
                            Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                 <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
                         CornerRadius="8" Background="{StaticResource InputBgBrush}" Margin="0,0,0,8">
-                    <PasswordBox x:Name="PwdBox"
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- 비밀번호 숨김 -->
+                        <PasswordBox x:Name="PwdBox" Grid.Column="0"
+                                     BorderThickness="0" Padding="12,10" FontSize="14"
+                                     Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
+                                     PasswordChanged="PwdBox_PasswordChanged"
+                                     KeyDown="Input_KeyDown"
+                                     Visibility="{Binding IsPasswordHidden, Converter={StaticResource BoolToVis}}"/>
+                        <!-- 비밀번호 표시 -->
+                        <TextBox x:Name="PwdTextBox" Grid.Column="0"
+                                 Text="{Binding LoginPassword, UpdateSourceTrigger=PropertyChanged}"
                                  BorderThickness="0" Padding="12,10" FontSize="14"
                                  Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
-                                 PasswordChanged="PwdBox_PasswordChanged"
-                                 KeyDown="Input_KeyDown"/>
+                                 KeyDown="Input_KeyDown"
+                                 Visibility="{Binding IsPasswordVisible, Converter={StaticResource BoolToVis}}"/>
+                        <!-- 눈 아이콘 토글 -->
+                        <Button Grid.Column="1" Width="38"
+                                Command="{Binding TogglePasswordVisibilityCommand}"
+                                BorderThickness="0" Background="Transparent" Cursor="Hand"
+                                ToolTip="비밀번호 표시/숨기기">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="&#xE7B3;"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPasswordVisible}" Value="True">
+                                                <Setter Property="Text" Value="&#xED1A;"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
+                    </Grid>
                 </Border>
+
+                <!-- ID/비밀번호 저장 -->
+                <CheckBox Content="아이디/비밀번호 저장"
+                          IsChecked="{Binding SaveCredentials}"
+                          FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                          Margin="0,0,0,8"/>
 
                 <!-- 오류 메시지 -->
                 <TextBlock Text="{Binding LoginError}"

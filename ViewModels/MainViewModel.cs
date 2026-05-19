@@ -215,13 +215,20 @@ public class MainViewModel : ViewModelBase
         {
             var mgr = new UpdateManager(new GithubSource("https://github.com/TomRyu/CMS5000", null, false));
             var update = await mgr.CheckForUpdatesAsync();
-            if (update == null) return;
+            if (update == null)
+            {
+                UpdateStatus = "최신 버전입니다.";
+                return;
+            }
 
             UpdateStatus = $"업데이트 다운로드 중... v{update.TargetFullRelease.Version}";
             await mgr.DownloadUpdatesAsync(update);
             UpdateStatus = $"v{update.TargetFullRelease.Version} 준비 완료 — 재시작 시 적용";
         }
-        catch { }
+        catch (Exception ex)
+        {
+            UpdateStatus = $"업데이트 오류: {ex.Message}";
+        }
     }
 
     private void UpdateBreadcrumb()

@@ -10,20 +10,16 @@
         </Grid.ColumnDefinitions>
 
         <!-- 좌측: 다크 브랜드 패널 -->
-        <Border Grid.Column="0" Background="{StaticResource NavIconBgBrush}">
+        <Border Grid.Column="0" Background="#FFFDF0">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="⬡" FontSize="64" Foreground="{StaticResource AccentBlueLightBrush}"
-                           HorizontalAlignment="Center"/>
-                <TextBlock HorizontalAlignment="Center" Margin="0,16,0,0">
+                <Image Source="pack://application:,,,/Images/autosyslogo.png"
+                       MaxWidth="240" MaxHeight="100"
+                       HorizontalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                <TextBlock HorizontalAlignment="Center" Margin="0,20,0,0">
                     <Run Text="CMS" FontSize="42" FontWeight="Bold" Foreground="{StaticResource NavIconActiveFgBrush}"/>
-                    <Run Text="-5000" FontSize="42" FontWeight="Bold" Foreground="White"/>
+                    <Run Text="-5000" FontSize="42" FontWeight="Bold" Foreground="{StaticResource NavIconActiveFgBrush}"/>
                 </TextBlock>
-                <TextBlock Text="Condition Monitoring System" FontSize="15"
-                           Foreground="{StaticResource NavIconFgBrush}"
-                           HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                <TextBlock Text="㈜오토시스" FontSize="13"
-                           Foreground="{StaticResource NavIconFgBrush}" Opacity="0.6"
-                           HorizontalAlignment="Center" Margin="0,6,0,0"/>
 
                 <StackPanel Margin="0,48,0,0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">

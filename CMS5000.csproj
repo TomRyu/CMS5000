@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Resource Include="CMS5000.ico"/>
+    <Resource Include="Images\autosyslogo.png"/>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

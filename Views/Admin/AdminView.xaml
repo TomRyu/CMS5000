@@ -20,16 +20,18 @@
             </ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <!-- ===== 왼쪽: 사용자 목록 ===== -->
+        <!-- ===== 메인 영역 ===== -->
         <Grid Grid.Column="0" Margin="24,20,12,20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>   <!-- 헤더 -->
+                <RowDefinition Height="Auto"/>   <!-- 통계 카드 -->
+                <RowDefinition Height="3*"/>     <!-- 그룹별 사용자 목록 -->
+                <RowDefinition Height="2*"
+                               MinHeight="180"/> <!-- 로그인 이력 -->
+                <RowDefinition Height="Auto"/>   <!-- 상태 메시지 -->
             </Grid.RowDefinitions>
 
-            <!-- 헤더 -->
+            <!-- ── 헤더 ── -->
             <Grid Grid.Row="0" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -46,8 +48,7 @@
                             Style="{StaticResource FlatButtonStyle}"
                             Padding="10,6" Margin="0,0,8,0"
                             Background="{StaticResource CardBgBrush}"
-                            BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
-                            ToolTip="새로 고침">
+                            BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                        Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
@@ -55,8 +56,7 @@
                                        Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding NewUserCommand}"
-                            Padding="12,7" Cursor="Hand">
+                    <Button Command="{Binding NewUserCommand}" Padding="12,7" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="bg" Background="{StaticResource AccentBlueBrush}"
@@ -80,8 +80,8 @@
                 </StackPanel>
             </Grid>
 
-            <!-- 통계 카드 -->
-            <Grid Grid.Row="1" Margin="0,0,0,16">
+            <!-- ── 통계 카드 ── -->
+            <Grid Grid.Row="1" Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="8"/>
@@ -95,7 +95,8 @@
                     <StackPanel>
                         <TextBlock Text="{Binding Users.Count}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource AccentBlueBrush}"/>
-                        <TextBlock Text="전체 계정" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                        <TextBlock Text="전체 계정" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Background="{StaticResource CardBgBrush}"
@@ -104,7 +105,8 @@
                     <StackPanel>
                         <TextBlock Text="{Binding ActiveCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource StatusGoodBrush}"/>
-                        <TextBlock Text="활성 계정" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                        <TextBlock Text="활성 계정" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="4" Background="{StaticResource CardBgBrush}"
@@ -113,18 +115,19 @@
                     <StackPanel>
                         <TextBlock Text="{Binding InactiveCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource StatusWarningBrush}"/>
-                        <TextBlock Text="비활성 계정" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                        <TextBlock Text="비활성 계정" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- 사용자 목록 테이블 -->
-            <Border Grid.Row="2"
+            <!-- ── 그룹별 사용자 목록 ── -->
+            <Border Grid.Row="2" Margin="0,0,0,10"
                     Background="{StaticResource CardBgBrush}"
                     BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
                     CornerRadius="8" ClipToBounds="True">
                 <DockPanel>
-                    <!-- 테이블 헤더 -->
+                    <!-- 테이블 컬럼 헤더 -->
                     <Border DockPanel.Dock="Top"
                             Background="{StaticResource TreePanelHeaderBrush}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,0,1"
@@ -133,37 +136,301 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="150"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="아이디" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="1" Text="이름" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="2" Text="권한" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="3" Text="상태" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="4" Text="작업" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="0" Text="아이디"   FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="1" Text="이름"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="2" Text="상태"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="3" Text="작업"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Grid>
                     </Border>
 
-                    <!-- 로딩 표시 -->
-                    <Border DockPanel.Dock="Top" Padding="16,24"
+                    <!-- 로딩 -->
+                    <Border DockPanel.Dock="Top" Padding="16,20"
                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
                         <TextBlock Text="로드 중..." HorizontalAlignment="Center"
                                    FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </Border>
 
-                    <!-- 행 목록 -->
+                    <!-- 역할 그룹 목록 -->
                     <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Users}">
+                        <ItemsControl ItemsSource="{Binding GroupedUsers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <!-- 역할 그룹 헤더 -->
+                                        <Border BorderBrush="{StaticResource CardBorderBrush}"
+                                                BorderThickness="0,0,0,1" Padding="16,7">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#EFF6FF"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Role}" Value="Admin">
+                                                            <Setter Property="Background" Value="#F5F3FF"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Role}" Value="Expert">
+                                                            <Setter Property="Background" Value="#F0FDF4"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Role}" Value="Maintenance">
+                                                            <Setter Property="Background" Value="#FFFBEB"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="9" Height="9"
+                                                         Margin="0,0,8,0" VerticalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="{StaticResource AccentBlueBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Role}" Value="Admin">
+                                                                    <Setter Property="Fill" Value="#7C3AED"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Role}" Value="Expert">
+                                                                    <Setter Property="Fill" Value="#16A34A"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Role}" Value="Maintenance">
+                                                                    <Setter Property="Fill" Value="#D97706"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock Text="{Binding RoleKorean}"
+                                                           FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Role}" Value="Admin">
+                                                                    <Setter Property="Foreground" Value="#7C3AED"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Role}" Value="Expert">
+                                                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Role}" Value="Maintenance">
+                                                                    <Setter Property="Foreground" Value="#D97706"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding Users.Count, StringFormat=' ({0}명)'}"
+                                                           FontSize="12" Foreground="{StaticResource TextDisabledBrush}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- 해당 역할의 사용자 행 -->
+                                        <ItemsControl ItemsSource="{Binding Users}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="{StaticResource CardBorderBrush}"
+                                                            BorderThickness="0,0,0,1" Padding="16,10" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                          CommandParameter="{Binding}"/>
+                                                        </Border.InputBindings>
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="Transparent"/>
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="150"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="80"/>
+                                                                <ColumnDefinition Width="150"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <!-- 아이디 + 아바타 -->
+                                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <Border Width="26" Height="26" CornerRadius="13"
+                                                                        Margin="0,0,8,0">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Role}" Value="Admin">
+                                                                                    <Setter Property="Background" Value="#7C3AED"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Role}" Value="Expert">
+                                                                                    <Setter Property="Background" Value="#16A34A"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Role}" Value="Maintenance">
+                                                                                    <Setter Property="Background" Value="#D97706"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock Text="{Binding Username[0]}"
+                                                                               FontSize="11" FontWeight="Bold" Foreground="White"
+                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Username}" FontSize="13"
+                                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                                           VerticalAlignment="Center"/>
+                                                            </StackPanel>
+
+                                                            <!-- 이름 -->
+                                                            <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center"/>
+
+                                                            <!-- 상태 -->
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                                                                    <Ellipse.Style>
+                                                                        <Style TargetType="Ellipse">
+                                                                            <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                                    <Setter Property="Fill" Value="{StaticResource TextDisabledBrush}"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Ellipse.Style>
+                                                                </Ellipse>
+                                                                <TextBlock FontSize="12" VerticalAlignment="Center">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Text"       Value="활성"/>
+                                                                            <Setter Property="Foreground" Value="{StaticResource StatusGoodBrush}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                                    <Setter Property="Text"       Value="비활성"/>
+                                                                                    <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </StackPanel>
+
+                                                            <!-- 작업 버튼 -->
+                                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <Button Command="{Binding DataContext.ToggleActiveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Style="{StaticResource FlatButtonStyle}"
+                                                                        Padding="6,3" Margin="0,0,6,0"
+                                                                        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                                                    <TextBlock FontSize="11">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Text"       Value="비활성화"/>
+                                                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                                        <Setter Property="Text"       Value="활성화"/>
+                                                                                        <Setter Property="Foreground" Value="{StaticResource StatusGoodBrush}"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                </Button>
+                                                                <Button Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Style="{StaticResource FlatButtonStyle}"
+                                                                        Padding="6,3"
+                                                                        BorderBrush="{StaticResource StatusDangerBrush}" BorderThickness="1">
+                                                                    <TextBlock Text="삭제" FontSize="11"
+                                                                               Foreground="{StaticResource StatusDangerBrush}"/>
+                                                                </Button>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- ── 로그인 이력 ── -->
+            <Border Grid.Row="3"
+                    Background="{StaticResource CardBgBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
+                    CornerRadius="8" ClipToBounds="True">
+                <DockPanel>
+                    <!-- 섹션 헤더 -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{StaticResource TreePanelHeaderBrush}"
+                            BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,0,1"
+                            Padding="16,10">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="로그인 이력" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding LoginLogs.Count, StringFormat=' (최근 {0}건)'}"
+                                           FontSize="11" Foreground="{StaticResource TextDisabledBrush}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right"
+                                    Command="{Binding RefreshLogsCommand}"
+                                    Style="{StaticResource FlatButtonStyle}"
+                                    Padding="8,4"
+                                    BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Text=" 새로 고침" FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- 컬럼 헤더 -->
+                    <Border DockPanel.Dock="Top"
+                            BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,0,1"
+                            Padding="16,7">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="160"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="아이디"   FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="1" Text="이름"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="2" Text="권한"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="3" Text="구분"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Grid.Column="4" Text="시간"     FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 로딩 -->
+                    <Border DockPanel.Dock="Top" Padding="16,16"
+                            Visibility="{Binding IsLogsBusy, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="이력 로드 중..." HorizontalAlignment="Center"
+                                   FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </Border>
+
+                    <!-- 이력 행 -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding LoginLogs}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="{StaticResource CardBorderBrush}"
-                                            BorderThickness="0,0,0,1" Padding="16,10" Cursor="Hand">
-                                        <Border.InputBindings>
-                                            <MouseBinding MouseAction="LeftClick"
-                                                          Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                          CommandParameter="{Binding}"/>
-                                        </Border.InputBindings>
+                                            BorderThickness="0,0,0,1" Padding="16,7">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="Transparent"/>
@@ -176,61 +443,48 @@
                                         </Border.Style>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="120"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="100"/>
                                                 <ColumnDefinition Width="80"/>
-                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="160"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- 아이디 + 아바타 -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Border Width="26" Height="26" CornerRadius="13"
-                                                        Background="{StaticResource AccentBlueBrush}" Margin="0,0,8,0">
-                                                    <TextBlock Text="{Binding Username[0]}"
-                                                               FontSize="11" FontWeight="Bold" Foreground="White"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <TextBlock Text="{Binding Username}" FontSize="13"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                            <!-- 아이디 -->
+                                            <TextBlock Grid.Column="0" Text="{Binding Username}"
+                                                       FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"/>
 
                                             <!-- 이름 -->
-                                            <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13"
-                                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding DisplayName}"
+                                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
 
-                                            <!-- 권한 배지 -->
-                                            <Border Grid.Column="2" CornerRadius="12" Padding="8,3"
+                                            <!-- 권한 -->
+                                            <TextBlock Grid.Column="2" Text="{Binding Role}"
+                                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
+
+                                            <!-- 로그인/로그아웃 구분 -->
+                                            <Border Grid.Column="3" CornerRadius="10" Padding="6,2"
                                                     HorizontalAlignment="Left" VerticalAlignment="Center">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                                        <Setter Property="Background" Value="#DCFCE7"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Role}" Value="Admin">
-                                                                <Setter Property="Background" Value="#F3E8FF"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Role}" Value="Maintenance">
-                                                                <Setter Property="Background" Value="#FFF8E7"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Role}" Value="Expert">
-                                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                                            <DataTrigger Binding="{Binding IsLogin}" Value="False">
+                                                                <Setter Property="Background" Value="#FEE2E2"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding Role}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock Text="{Binding ActionDisplay}" FontSize="11" FontWeight="SemiBold">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                                            <Setter Property="Foreground" Value="#16A34A"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Role}" Value="Admin">
-                                                                    <Setter Property="Foreground" Value="#7C3AED"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Role}" Value="Maintenance">
-                                                                    <Setter Property="Foreground" Value="#D97706"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Role}" Value="Expert">
-                                                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                                                <DataTrigger Binding="{Binding IsLogin}" Value="False">
+                                                                    <Setter Property="Foreground" Value="#DC2626"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -238,67 +492,11 @@
                                                 </TextBlock>
                                             </Border>
 
-                                            <!-- 상태 -->
-                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Ellipse Width="8" Height="8" Margin="0,0,6,0">
-                                                    <Ellipse.Style>
-                                                        <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                    <Setter Property="Fill" Value="{StaticResource TextDisabledBrush}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Ellipse.Style>
-                                                </Ellipse>
-                                                <TextBlock FontSize="12" VerticalAlignment="Center">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="활성"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource StatusGoodBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                    <Setter Property="Text" Value="비활성"/>
-                                                                    <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </StackPanel>
-
-                                            <!-- 작업 버튼 -->
-                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Button Command="{Binding DataContext.ToggleActiveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                        CommandParameter="{Binding}"
-                                                        Style="{StaticResource FlatButtonStyle}"
-                                                        Padding="6,3" Margin="0,0,6,0"
-                                                        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
-                                                    <TextBlock FontSize="11">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Text" Value="비활성화"/>
-                                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                        <Setter Property="Text" Value="활성화"/>
-                                                                        <Setter Property="Foreground" Value="{StaticResource StatusGoodBrush}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </Button>
-                                                <Button Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                        CommandParameter="{Binding}"
-                                                        Style="{StaticResource FlatButtonStyle}"
-                                                        Padding="6,3"
-                                                        BorderBrush="{StaticResource StatusDangerBrush}" BorderThickness="1">
-                                                    <TextBlock Text="삭제" FontSize="11"
-                                                               Foreground="{StaticResource StatusDangerBrush}"/>
-                                                </Button>
-                                            </StackPanel>
+                                            <!-- 시간 -->
+                                            <TextBlock Grid.Column="4" Text="{Binding LoggedAtDisplay}"
+                                                       FontSize="12" FontFamily="Consolas"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -308,8 +506,8 @@
                 </DockPanel>
             </Border>
 
-            <!-- 상태 메시지 -->
-            <TextBlock Grid.Row="3" Text="{Binding StatusMessage}"
+            <!-- ── 상태 메시지 ── -->
+            <TextBlock Grid.Row="4" Text="{Binding StatusMessage}"
                        FontSize="12" Foreground="{StaticResource AccentBlueBrush}"
                        Margin="0,8,0,0" TextWrapping="Wrap"
                        Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVis}}"/>
@@ -337,7 +535,6 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <!-- 아이디 -->
                     <TextBlock Text="아이디" FontSize="12" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
@@ -351,7 +548,7 @@
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsAddingNew}" Value="False">
                                             <Setter Property="IsReadOnly" Value="True"/>
-                                            <Setter Property="Opacity" Value="0.6"/>
+                                            <Setter Property="Opacity"    Value="0.6"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -359,7 +556,6 @@
                         </TextBox>
                     </Border>
 
-                    <!-- 이름 -->
                     <TextBlock Text="이름" FontSize="12" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
@@ -369,7 +565,6 @@
                                  Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"/>
                     </Border>
 
-                    <!-- 권한 -->
                     <TextBlock Text="권한" FontSize="12" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
@@ -380,7 +575,6 @@
                                   Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"/>
                     </Border>
 
-                    <!-- 비밀번호 -->
                     <TextBlock FontSize="12" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6">
                         <TextBlock.Style>
@@ -402,7 +596,6 @@
                                      PasswordChanged="AdminPwdBox_PasswordChanged"/>
                     </Border>
 
-                    <!-- 저장 / 취소 버튼 -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -410,13 +603,11 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0" Command="{Binding CancelEditCommand}"
-                                Style="{StaticResource FlatButtonStyle}"
-                                Padding="0,10"
+                                Style="{StaticResource FlatButtonStyle}" Padding="0,10"
                                 BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
                             <TextBlock Text="취소" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
-                        <Button Grid.Column="2" Command="{Binding SaveCommand}"
-                                Padding="0,10" Cursor="Hand">
+                        <Button Grid.Column="2" Command="{Binding SaveCommand}" Padding="0,10" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="bg" Background="{StaticResource AccentBlueBrush}"

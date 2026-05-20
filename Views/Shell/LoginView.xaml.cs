@@ -21,7 +21,6 @@ public partial class LoginView : UserControl
         if (e.NewValue is MainViewModel vm)
         {
             vm.PropertyChanged += OnVmPropertyChanged;
-            // 저장된 비밀번호가 있으면 PasswordBox에 반영
             PwdBox.Password = vm.LoginPassword;
         }
     }
@@ -29,8 +28,9 @@ public partial class LoginView : UserControl
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (sender is not MainViewModel vm) return;
-        // 비밀번호 숨김으로 전환 시 PasswordBox 동기화
-        if (e.PropertyName == nameof(MainViewModel.IsPasswordVisible) && !vm.IsPasswordVisible)
+        if (e.PropertyName == nameof(MainViewModel.LoginPassword))
+            PwdBox.Password = vm.LoginPassword;
+        else if (e.PropertyName == nameof(MainViewModel.IsPasswordVisible) && !vm.IsPasswordVisible)
             PwdBox.Password = vm.LoginPassword;
     }
 
@@ -40,8 +40,109 @@ public partial class LoginView : UserControl
             vm.LoginPassword = ((PasswordBox)sender).Password;
     }
 
+    // ── 아이디 드롭다운 ──────────────────────────────────────────────
+
+    private bool _selectingUsername  = false;
+    private bool _keyboardNavigating = false;
+
+    private void UsernameBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_selectingUsername || DataContext is not MainViewModel vm) return;
+
+        var text = UsernameBox.Text;
+        if (string.IsNullOrEmpty(text))
+        {
+            UsernamePopup.IsOpen = false;
+            return;
+        }
+
+        var filtered = vm.LoginUsernames
+            .Where(u => u.Contains(text, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        _keyboardNavigating = true;
+        UsernameList.ItemsSource   = filtered;
+        UsernameList.SelectedIndex = -1;
+        _keyboardNavigating = false;
+
+        UsernamePopup.Width  = UsernameBorder.ActualWidth;
+        UsernamePopup.IsOpen = filtered.Count > 0;
+    }
+
+    private void UsernameDropdownBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            _keyboardNavigating = true;
+            UsernameList.ItemsSource   = vm.LoginUsernames;
+            UsernameList.SelectedIndex = -1;
+            _keyboardNavigating = false;
+        }
+        UsernamePopup.Width  = UsernameBorder.ActualWidth;
+        UsernamePopup.IsOpen = !UsernamePopup.IsOpen;
+    }
+
+    // 마우스 클릭으로 선택
+    private void UsernameList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_keyboardNavigating) return;
+        if (sender is ListBox lb && lb.SelectedItem is string username)
+            CommitUsername(username);
+    }
+
+    private void CommitUsername(string username)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        _selectingUsername = true;
+        vm.LoginUsername   = username;
+        _selectingUsername = false;
+        vm.OnUsernameSelected(username);
+        UsernamePopup.IsOpen = false;
+        _keyboardNavigating  = true;
+        UsernameList.SelectedIndex = -1;
+        _keyboardNavigating  = false;
+        PwdBox.Focus();
+    }
+
+    // ── 키보드 핸들러 ────────────────────────────────────────────────
+
     private void Input_KeyDown(object sender, KeyEventArgs e)
     {
+        // Popup이 열려 있을 때 UsernameBox에서의 키 처리
+        if (UsernamePopup.IsOpen && sender == UsernameBox)
+        {
+            if (e.Key == Key.Down)
+            {
+                _keyboardNavigating    = true;
+                UsernameList.SelectedIndex = Math.Min(
+                    UsernameList.SelectedIndex + 1, UsernameList.Items.Count - 1);
+                _keyboardNavigating    = false;
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Up)
+            {
+                _keyboardNavigating    = true;
+                UsernameList.SelectedIndex = Math.Max(UsernameList.SelectedIndex - 1, -1);
+                _keyboardNavigating    = false;
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Enter && UsernameList.SelectedIndex >= 0 &&
+                UsernameList.SelectedItem is string selected)
+            {
+                CommitUsername(selected);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Escape)
+            {
+                UsernamePopup.IsOpen = false;
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (e.Key == Key.Enter && DataContext is MainViewModel vm)
             vm.LoginCommand.Execute(null);
     }

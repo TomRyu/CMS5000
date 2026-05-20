@@ -31,6 +31,7 @@ public static class AuthService
                 return (false, "아이디 또는 비밀번호가 올바르지 않습니다.");
 
             CurrentUser = user;
+            await RecordLogAsync(user, "login");
             return (true, "");
         }
         catch (Exception ex)
@@ -39,7 +40,33 @@ public static class AuthService
         }
     }
 
-    public static void Logout() => CurrentUser = null;
+    public static void Logout()
+    {
+        if (CurrentUser != null)
+            _ = RecordLogAsync(CurrentUser, "logout");
+        CurrentUser = null;
+    }
+
+    private static async Task RecordLogAsync(CmsUser user, string action)
+    {
+        try
+        {
+            var log = new LoginLog
+            {
+                UserId      = user.Id,
+                Username    = user.Username,
+                DisplayName = user.DisplayName,
+                Role        = user.Role,
+                Action      = action,
+                LoggedAt    = DateTime.UtcNow
+            };
+            await SupabaseService.Client.From<LoginLog>().Insert(log);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[LoginLog] {action} 기록 실패: {ex.Message}");
+        }
+    }
 
     public static UserRole GetCurrentRole() => CurrentUser?.Role switch
     {

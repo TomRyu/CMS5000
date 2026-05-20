@@ -10,6 +10,7 @@ using CMS5000.ViewModels.Expert;
 using CMS5000.ViewModels.Maintenance;
 using CMS5000.ViewModels.Operator;
 using CMS5000.ViewModels.Settings;
+using Postgrest;
 using Velopack;
 using Velopack.Sources;
 
@@ -32,7 +33,8 @@ public class MainViewModel : ViewModelBase
     private bool _isLoginBusy;
     private string _updateStatus = "";
     private string _windowTitle = "CMS-5000 | ㈜오토시스";
-    private bool _saveCredentials;
+    private bool _saveUsername;
+    private bool _savePassword;
     private bool _isPasswordVisible;
 
     public UserRole CurrentRole        { get => _currentRole;       set { SetProperty(ref _currentRole, value); OnPropertyChanged(nameof(IsAdminRole)); OnPropertyChanged(nameof(IsExpertRole)); OnPropertyChanged(nameof(IsMaintenanceOrExpert)); } }
@@ -50,7 +52,8 @@ public class MainViewModel : ViewModelBase
     public bool IsLoginBusy            { get => _isLoginBusy;        set => SetProperty(ref _isLoginBusy, value); }
     public string UpdateStatus         { get => _updateStatus;       set => SetProperty(ref _updateStatus, value); }
     public string WindowTitle          { get => _windowTitle;        set => SetProperty(ref _windowTitle, value); }
-    public bool SaveCredentials        { get => _saveCredentials;    set => SetProperty(ref _saveCredentials, value); }
+    public bool SaveUsername           { get => _saveUsername;       set => SetProperty(ref _saveUsername, value); }
+    public bool SavePassword           { get => _savePassword;       set => SetProperty(ref _savePassword, value); }
     public bool IsPasswordVisible      { get => _isPasswordVisible;  set { SetProperty(ref _isPasswordVisible, value); OnPropertyChanged(nameof(IsPasswordHidden)); } }
     public bool IsPasswordHidden       => !_isPasswordVisible;
     public bool IsAdminRole            => _currentRole == UserRole.Admin;
@@ -65,7 +68,8 @@ public class MainViewModel : ViewModelBase
     public AdminViewModel       AdminVM       { get; } = new();
     public SettingsViewModel    SettingsVM    { get; } = new();
 
-    public ObservableCollection<NavNode> NavTree { get; } = [];
+    public ObservableCollection<NavNode>  NavTree        { get; } = [];
+    public ObservableCollection<string>  LoginUsernames { get; } = [];
 
     public RelayCommand LoginCommand                        { get; }
     public RelayCommand LogoutCommand                       { get; }
@@ -109,6 +113,7 @@ public class MainViewModel : ViewModelBase
         BuildNavTree();
         LoadSavedCredentials();
         _ = CheckForUpdatesAsync();
+        _ = LoadLoginUsernamesAsync();
     }
 
     private async Task LoginAsync()
@@ -147,25 +152,25 @@ public class MainViewModel : ViewModelBase
         };
 
         ActiveNavIcon = role == UserRole.Admin ? "Admin" : "Dashboard";
+        IsTreePanelVisible = role != UserRole.Admin;
         IsPasswordVisible = false;
         SettingsVM.LoadFromCurrentUser();
 
-        if (SaveCredentials)
-            SaveCredentialsToFile();
-        else
-            DeleteSavedCredentials();
+        PersistCredentials(LoginUsername, LoginPassword);
     }
 
     private void Logout()
     {
         AuthService.Logout();
         IsLoginVisible = true;
+        IsTreePanelVisible = true;
         CurrentView = null;
         LoginUsername = "";
         LoginPassword = "";
         LoginError = "";
         IsPasswordVisible = false;
         LoadSavedCredentials();
+        _ = LoadLoginUsernamesAsync();
     }
 
     private static string CredentialsPath =>
@@ -179,36 +184,84 @@ public class MainViewModel : ViewModelBase
             var json = File.ReadAllText(CredentialsPath);
             var data = JsonSerializer.Deserialize<SavedCredentials>(json);
             if (data == null) return;
-            LoginUsername = data.Username;
-            var pwdBytes = ProtectedData.Unprotect(Convert.FromBase64String(data.EncryptedPassword), null, DataProtectionScope.CurrentUser);
-            LoginPassword = Encoding.UTF8.GetString(pwdBytes);
-            SaveCredentials = true;
+            SaveUsername = data.SaveUsername;
+            SavePassword = data.SavePassword;
+            if (data.SaveUsername && !string.IsNullOrEmpty(data.LastUsername))
+            {
+                LoginUsername = data.LastUsername;
+                if (data.SavePassword && data.Passwords.TryGetValue(data.LastUsername, out var enc))
+                {
+                    var pwdBytes = ProtectedData.Unprotect(Convert.FromBase64String(enc), null, DataProtectionScope.CurrentUser);
+                    LoginPassword = Encoding.UTF8.GetString(pwdBytes);
+                }
+            }
         }
         catch { }
     }
 
-    private void SaveCredentialsToFile()
+    private void PersistCredentials(string username, string password)
     {
         try
         {
+            SavedCredentials existing = new();
+            if (File.Exists(CredentialsPath))
+            {
+                try
+                {
+                    var existingJson = File.ReadAllText(CredentialsPath);
+                    existing = JsonSerializer.Deserialize<SavedCredentials>(existingJson) ?? new();
+                }
+                catch { }
+            }
+
+            var passwords = new Dictionary<string, string>(existing.Passwords);
+            if (SavePassword && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+            {
+                var pwdBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(password), null, DataProtectionScope.CurrentUser);
+                passwords[username] = Convert.ToBase64String(pwdBytes);
+            }
+
+            var data = new SavedCredentials
+            {
+                LastUsername = SaveUsername ? username : "",
+                SaveUsername = SaveUsername,
+                SavePassword = SavePassword,
+                Passwords    = passwords,
+            };
             Directory.CreateDirectory(Path.GetDirectoryName(CredentialsPath)!);
-            var pwdBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(LoginPassword), null, DataProtectionScope.CurrentUser);
-            var data = new SavedCredentials { Username = LoginUsername, EncryptedPassword = Convert.ToBase64String(pwdBytes) };
             File.WriteAllText(CredentialsPath, JsonSerializer.Serialize(data));
         }
         catch { }
     }
 
-    private static void DeleteSavedCredentials()
+    public void OnUsernameSelected(string username)
     {
-        try { if (File.Exists(CredentialsPath)) File.Delete(CredentialsPath); }
+        if (!SavePassword) { LoginPassword = ""; return; }
+        try
+        {
+            if (!File.Exists(CredentialsPath)) return;
+            var json = File.ReadAllText(CredentialsPath);
+            var data = JsonSerializer.Deserialize<SavedCredentials>(json);
+            if (data == null) return;
+            if (data.Passwords.TryGetValue(username, out var enc))
+            {
+                var pwdBytes = ProtectedData.Unprotect(Convert.FromBase64String(enc), null, DataProtectionScope.CurrentUser);
+                LoginPassword = Encoding.UTF8.GetString(pwdBytes);
+            }
+            else
+            {
+                LoginPassword = "";
+            }
+        }
         catch { }
     }
 
     private record SavedCredentials
     {
-        public string Username          { get; init; } = "";
-        public string EncryptedPassword { get; init; } = "";
+        public string                      LastUsername { get; init; } = "";
+        public bool                        SaveUsername { get; init; } = false;
+        public bool                        SavePassword { get; init; } = false;
+        public Dictionary<string, string>  Passwords    { get; init; } = new();
     }
 
     private void BuildNavTree()
@@ -312,6 +365,27 @@ public class MainViewModel : ViewModelBase
         {
             UpdateStatus = $"업데이트 오류: {ex.Message}";
         }
+    }
+
+    private async Task LoadLoginUsernamesAsync()
+    {
+        try
+        {
+            var response = await SupabaseService.Client.From<LoginLog>()
+                .Order("logged_at", Constants.Ordering.Descending)
+                .Limit(500)
+                .Get();
+
+            var distinct = response.Models
+                .Select(l => l.Username)
+                .Distinct()
+                .ToList();
+
+            LoginUsernames.Clear();
+            foreach (var name in distinct)
+                LoginUsernames.Add(name);
+        }
+        catch { }
     }
 
     private void UpdateBreadcrumb()

@@ -359,7 +359,16 @@ public class MainViewModel : ViewModelBase
 
             UpdateStatus = $"업데이트 다운로드 중... v{update.TargetFullRelease.Version}";
             await mgr.DownloadUpdatesAsync(update);
-            UpdateStatus = $"v{update.TargetFullRelease.Version} 준비 완료 — 재시작 시 적용";
+            UpdateStatus = $"v{update.TargetFullRelease.Version} 준비 완료";
+
+            var result = System.Windows.MessageBox.Show(
+                $"새 버전 v{update.TargetFullRelease.Version} 이(가) 준비되었습니다.\n지금 재시작하여 업데이트를 적용하시겠습니까?",
+                "업데이트 준비 완료",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Information);
+
+            if (result == System.Windows.MessageBoxResult.Yes)
+                mgr.ApplyUpdatesAndRestart(update);
         }
         catch (Exception ex)
         {

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using CMS5000.ViewModels;
 
 namespace CMS5000.Views.Shell;
@@ -82,7 +83,35 @@ public partial class LoginView : UserControl
         UsernamePopup.IsOpen = !UsernamePopup.IsOpen;
     }
 
-    // 마우스 클릭으로 선택
+    // 마우스 호버 → SelectedIndex 동기화 (Enter 커밋 가능하게)
+    private void UsernameList_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (sender is not ListBox lb) return;
+        var dep = VisualTreeHelper.HitTest(lb, e.GetPosition(lb))?.VisualHit as DependencyObject;
+        while (dep != null && dep is not ListBoxItem)
+            dep = VisualTreeHelper.GetParent(dep);
+        if (dep is ListBoxItem item)
+        {
+            _keyboardNavigating = true;
+            lb.SelectedItem = item.DataContext;
+            _keyboardNavigating = false;
+        }
+    }
+
+    // 마우스 클릭으로 선택 (PreviewMouseDown: 이미 SelectedIndex가 설정된 항목 클릭 시도 대응)
+    private void UsernameList_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not ListBox lb) return;
+        var dep = VisualTreeHelper.HitTest(lb, e.GetPosition(lb))?.VisualHit as DependencyObject;
+        while (dep != null && dep is not ListBoxItem)
+            dep = VisualTreeHelper.GetParent(dep);
+        if (dep is ListBoxItem item && item.DataContext is string username)
+        {
+            CommitUsername(username);
+            e.Handled = true;
+        }
+    }
+
     private void UsernameList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_keyboardNavigating) return;

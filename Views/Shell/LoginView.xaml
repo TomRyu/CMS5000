@@ -101,6 +101,8 @@
                                      Background="Transparent" BorderThickness="0"
                                      Focusable="False"
                                      SelectionChanged="UsernameList_SelectionChanged"
+                                     MouseMove="UsernameList_MouseMove"
+                                     PreviewMouseDown="UsernameList_PreviewMouseDown"
                                      MaxHeight="220">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">

@@ -55,32 +55,88 @@
                            FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
                            HorizontalAlignment="Center" Margin="0,6,0,32"/>
 
-                <!-- 아이디 -->
-                <TextBlock Text="아이디" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                <Grid Margin="0,0,0,14">
+                <!-- 아이디 + 비밀번호 통합 입력 박스 (카카오 스타일) -->
+                <Grid Margin="0,0,0,16">
                     <Border x:Name="UsernameBorder"
                             BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
                             CornerRadius="8" Background="{StaticResource InputBgBrush}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="UsernameBox" Grid.Column="0"
-                                     Text="{Binding LoginUsername, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="0" Padding="12,10" FontSize="14"
-                                     Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
-                                     PreviewKeyDown="Input_KeyDown"
-                                     TextChanged="UsernameBox_TextChanged"/>
-                            <Button x:Name="UsernameDropdownBtn" Grid.Column="1"
-                                    Width="34" BorderThickness="0" Background="Transparent"
-                                    Cursor="Hand" ToolTip="이전 로그인 계정 선택"
-                                    Click="UsernameDropdownBtn_Click">
-                                <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10"
-                                           Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </Button>
-                        </Grid>
+                        <StackPanel>
+                            <!-- 아이디 행 -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="UsernameBox" Grid.Column="0"
+                                         Text="{Binding LoginUsername, UpdateSourceTrigger=PropertyChanged}"
+                                         BorderThickness="0" Padding="12,10" FontSize="14"
+                                         Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
+                                         PreviewKeyDown="Input_KeyDown"
+                                         TextChanged="UsernameBox_TextChanged"/>
+                                <Button x:Name="UsernameDropdownBtn" Grid.Column="1"
+                                        Width="34" BorderThickness="0" Background="Transparent"
+                                        Cursor="Hand" ToolTip="이전 로그인 계정 선택"
+                                        Click="UsernameDropdownBtn_Click">
+                                    <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- 구분선 -->
+                            <Rectangle Height="1" Fill="{StaticResource InputBorderBrush}"/>
+
+                            <!-- 비밀번호 행 -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- 비밀번호 숨김 -->
+                                <PasswordBox x:Name="PwdBox" Grid.Column="0"
+                                             BorderThickness="0" Padding="12,10" FontSize="14"
+                                             Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
+                                             PasswordChanged="PwdBox_PasswordChanged"
+                                             KeyDown="Input_KeyDown"
+                                             Visibility="{Binding IsPasswordHidden, Converter={StaticResource BoolToVis}}"/>
+                                <!-- 비밀번호 표시 -->
+                                <TextBox x:Name="PwdTextBox" Grid.Column="0"
+                                         Text="{Binding LoginPassword, UpdateSourceTrigger=PropertyChanged}"
+                                         BorderThickness="0" Padding="12,10" FontSize="14"
+                                         Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
+                                         KeyDown="Input_KeyDown"
+                                         Visibility="{Binding IsPasswordVisible, Converter={StaticResource BoolToVis}}"/>
+                                <!-- 눈 아이콘 토글 (비밀번호 입력 시만 표시) -->
+                                <Button Grid.Column="1" Width="38"
+                                        Command="{Binding TogglePasswordVisibilityCommand}"
+                                        BorderThickness="0" Background="Transparent" Cursor="Hand"
+                                        ToolTip="비밀번호 표시/숨기기">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LoginPassword}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Image Source="pack://application:,,,/Images/eye_icon.png"
+                                           Width="20" Height="18" Stretch="Uniform"
+                                           RenderOptions.BitmapScalingMode="HighQuality">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Opacity" Value="0.55"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPasswordVisible}" Value="True">
+                                                        <Setter Property="Opacity" Value="1.0"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
                     </Border>
 
                     <!-- 이전 로그인 계정 드롭다운 -->
@@ -147,53 +203,6 @@
                         </Border>
                     </Popup>
                 </Grid>
-
-                <!-- 비밀번호 -->
-                <TextBlock Text="비밀번호" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
-                        CornerRadius="8" Background="{StaticResource InputBgBrush}" Margin="0,0,0,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <!-- 비밀번호 숨김 -->
-                        <PasswordBox x:Name="PwdBox" Grid.Column="0"
-                                     BorderThickness="0" Padding="12,10" FontSize="14"
-                                     Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
-                                     PasswordChanged="PwdBox_PasswordChanged"
-                                     KeyDown="Input_KeyDown"
-                                     Visibility="{Binding IsPasswordHidden, Converter={StaticResource BoolToVis}}"/>
-                        <!-- 비밀번호 표시 -->
-                        <TextBox x:Name="PwdTextBox" Grid.Column="0"
-                                 Text="{Binding LoginPassword, UpdateSourceTrigger=PropertyChanged}"
-                                 BorderThickness="0" Padding="12,10" FontSize="14"
-                                 Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"
-                                 KeyDown="Input_KeyDown"
-                                 Visibility="{Binding IsPasswordVisible, Converter={StaticResource BoolToVis}}"/>
-                        <!-- 눈 아이콘 토글 -->
-                        <Button Grid.Column="1" Width="38"
-                                Command="{Binding TogglePasswordVisibilityCommand}"
-                                BorderThickness="0" Background="Transparent" Cursor="Hand"
-                                ToolTip="비밀번호 표시/숨기기">
-                            <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="&#xE7B3;"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsPasswordVisible}" Value="True">
-                                                <Setter Property="Text" Value="&#xED1A;"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Button>
-                    </Grid>
-                </Border>
 
                 <!-- ID/비밀번호 저장 -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">

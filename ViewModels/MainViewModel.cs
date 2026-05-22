@@ -347,7 +347,7 @@ public class MainViewModel : ViewModelBase
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Information);
 
-                return result == System.Windows.MessageBoxResult.Yes;
+                return result == System.Windows.MessageBoxResult.Yes;    
             });
     }
 

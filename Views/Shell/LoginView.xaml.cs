@@ -9,6 +9,8 @@ namespace CMS5000.Views.Shell;
 
 public partial class LoginView : UserControl
 {
+    private bool _syncingPassword;
+
     public LoginView()
     {
         InitializeComponent();
@@ -22,7 +24,7 @@ public partial class LoginView : UserControl
         if (e.NewValue is MainViewModel vm)
         {
             vm.PropertyChanged += OnVmPropertyChanged;
-            PwdBox.Password = vm.LoginPassword;
+            SyncPasswordBox(vm.LoginPassword);
         }
     }
 
@@ -30,15 +32,26 @@ public partial class LoginView : UserControl
     {
         if (sender is not MainViewModel vm) return;
         if (e.PropertyName == nameof(MainViewModel.LoginPassword))
-            PwdBox.Password = vm.LoginPassword;
+            SyncPasswordBox(vm.LoginPassword);
         else if (e.PropertyName == nameof(MainViewModel.IsPasswordVisible) && !vm.IsPasswordVisible)
-            PwdBox.Password = vm.LoginPassword;
+            SyncPasswordBox(vm.LoginPassword);
     }
 
     private void PwdBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
+        if (_syncingPassword) return;
+
         if (DataContext is MainViewModel vm)
             vm.LoginPassword = ((PasswordBox)sender).Password;
+    }
+
+    private void SyncPasswordBox(string password)
+    {
+        if (PwdBox.Password == password) return;
+
+        _syncingPassword = true;
+        PwdBox.Password = password;
+        _syncingPassword = false;
     }
 
     // ── 아이디 드롭다운 ──────────────────────────────────────────────

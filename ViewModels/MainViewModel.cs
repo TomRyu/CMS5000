@@ -11,8 +11,6 @@ using CMS5000.ViewModels.Maintenance;
 using CMS5000.ViewModels.Operator;
 using CMS5000.ViewModels.Settings;
 using Postgrest;
-using Velopack;
-using Velopack.Sources;
 
 namespace CMS5000.ViewModels;
 
@@ -335,45 +333,22 @@ public class MainViewModel : ViewModelBase
 
     private async Task CheckForUpdatesAsync()
     {
-        try
-        {
-            var mgr = new UpdateManager(new GithubSource("https://github.com/TomRyu/CMS5000", null, false));
+        var version = UpdateService.GetCurrentVersionText();
+        if (!string.IsNullOrWhiteSpace(version))
+            WindowTitle = $"CMS-5000 v{version} | ㈜오토시스";
 
-            var current = mgr.CurrentVersion;
-            if (current != null)
-                WindowTitle = $"CMS-5000 v{current} | ㈜오토시스";
-            else
+        await UpdateService.CheckDownloadAndApplyAsync(
+            status => UpdateStatus = status,
+            versionToApply =>
             {
-                // Velopack 미설치 실행(개발/직접 실행) 시 어셈블리 버전으로 표시
-                var asm = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version;
-                if (asm != null)
-                    WindowTitle = $"CMS-5000 v{asm.Major}.{asm.Minor}.{asm.Build} | ㈜오토시스";
-            }
+                var result = System.Windows.MessageBox.Show(
+                    $"새 버전 v{versionToApply} 업데이트가 준비되었습니다.\n지금 재시작해서 적용하시겠습니까?",
+                    "업데이트 준비 완료",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
 
-            var update = await mgr.CheckForUpdatesAsync();
-            if (update == null)
-            {
-                UpdateStatus = "최신 버전입니다.";
-                return;
-            }
-
-            UpdateStatus = $"업데이트 다운로드 중... v{update.TargetFullRelease.Version}";
-            await mgr.DownloadUpdatesAsync(update);
-            UpdateStatus = $"v{update.TargetFullRelease.Version} 준비 완료";
-
-            var result = System.Windows.MessageBox.Show(
-                $"새 버전 v{update.TargetFullRelease.Version} 이(가) 준비되었습니다.\n지금 재시작하여 업데이트를 적용하시겠습니까?",
-                "업데이트 준비 완료",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Information);
-
-            if (result == System.Windows.MessageBoxResult.Yes)
-                mgr.ApplyUpdatesAndRestart(update);
-        }
-        catch (Exception ex)
-        {
-            UpdateStatus = $"업데이트 오류: {ex.Message}";
-        }
+                return result == System.Windows.MessageBoxResult.Yes;
+            });
     }
 
     private async Task LoadLoginUsernamesAsync()

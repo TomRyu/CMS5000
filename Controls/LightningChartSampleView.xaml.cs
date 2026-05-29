@@ -46,25 +46,52 @@ public partial class LightningChartSampleView : UserControl
 
     // ── Construction ──────────────────────────────────────────────────────
 
+    private bool _initFailed;
+
     public LightningChartSampleView()
     {
-        InitializeComponent();
-        Loaded += (_, _) => RenderChart();
+        try
+        {
+            InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            _initFailed = true;
+            Content = MakeErrorBlock($"LightningChart 초기화 실패:\n{ex.Message}");
+            return;
+        }
+        Loaded += (_, _) =>
+        {
+            try { RenderChart(); }
+            catch (Exception ex) { Content = MakeErrorBlock($"차트 렌더링 실패:\n{ex.Message}"); }
+        };
     }
+
+    private static TextBlock MakeErrorBlock(string message) => new()
+    {
+        Text = message,
+        TextWrapping = TextWrapping.Wrap,
+        Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0x77, 0x44)),
+        VerticalAlignment = VerticalAlignment.Center,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Margin = new Thickness(20),
+    };
 
     // ── DP Callbacks ──────────────────────────────────────────────────────
 
     private static void OnPlotTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not LightningChartSampleView v || !v.IsLoaded) return;
+        if (d is not LightningChartSampleView v || !v.IsLoaded || v._initFailed) return;
         v._is3DMode = false;
-        v.RenderChart();
+        try { v.RenderChart(); }
+        catch (Exception ex) { v.Content = MakeErrorBlock($"차트 렌더링 실패:\n{ex.Message}"); }
     }
 
     private static void OnEquipmentNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not LightningChartSampleView v || !v.IsLoaded) return;
-        v.RenderChart();
+        if (d is not LightningChartSampleView v || !v.IsLoaded || v._initFailed) return;
+        try { v.RenderChart(); }
+        catch (Exception ex) { v.Content = MakeErrorBlock($"차트 렌더링 실패:\n{ex.Message}"); }
     }
 
     // ── Toggle handlers ───────────────────────────────────────────────────

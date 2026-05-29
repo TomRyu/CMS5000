@@ -26,7 +26,7 @@ jobs:
 
       - name: appsettings.json 생성 (Secrets → 파일)
         run: |
-          $content = '{"Supabase":{"Url":"${{ secrets.SUPABASE_URL }}","ServiceRoleKey":"${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"}}'
+          $content = '{"Supabase":{"Url":"${{ secrets.SUPABASE_URL }}","ServiceRoleKey":"${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"},"LightningChart":{"LicenseKey":"${{ secrets.LIGHTNINGCHART_LICENSE_KEY }}"}}'
           [System.IO.File]::WriteAllText("appsettings.json", $content, [System.Text.Encoding]::UTF8)
 
       - name: 의존성 복원

@@ -382,13 +382,21 @@ public class MainViewModel : ViewModelBase
             status => UpdateStatus = status,
             versionToApply =>
             {
+                if (!IsLoginVisible)
+                {
+                    // 로그인 중 또는 이후에는 강제 재시작하지 않음 — 다음 실행 시 자동 적용
+                    System.Windows.Application.Current.Dispatcher.Invoke(
+                        () => UpdateStatus = $"v{versionToApply} 업데이트 준비 완료 (다음 실행 시 적용)");
+                    return false;
+                }
+
                 var result = System.Windows.MessageBox.Show(
                     $"새 버전 v{versionToApply} 업데이트가 준비되었습니다.\n지금 재시작해서 적용하시겠습니까?",
                     "업데이트 준비 완료",
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Information);
 
-                return result == System.Windows.MessageBoxResult.Yes;    
+                return result == System.Windows.MessageBoxResult.Yes;
             });
     }
 

@@ -16,6 +16,22 @@ namespace CMS5000.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
+    private static readonly string[] LightningChartSampleTypes =
+    [
+        "Trend",
+        "Spectrum",
+        "Spectrogram",
+        "Waterfall",
+        "Cascade",
+        "Orbit",
+        "Orbit & Time Base",
+        "Time Base",
+        "Bode",
+        "Polar",
+        "Campbell Diagram",
+        "Surface",
+    ];
+
     private UserRole _currentRole = UserRole.Operator;
     private object? _currentView;
     private string _currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -112,6 +128,18 @@ public class MainViewModel : ViewModelBase
         LoadSavedCredentials();
         _ = CheckForUpdatesAsync();
         _ = LoadLoginUsernamesAsync();
+    }
+
+    public void SelectNavNode(NavNode node)
+    {
+        SelectedNode = node;
+
+        if (!node.IsChartNode) return;
+
+        ExpertVM.OpenChartSample(node.ChartType);
+        CurrentView = ExpertVM;
+        ActiveNavIcon = "Diagnosis";
+        Breadcrumb = $"Machinery Health / LightningChart Samples / {node.Name}";
     }
 
     private async Task LoginAsync()
@@ -266,6 +294,19 @@ public class MainViewModel : ViewModelBase
     {
         NavTree.Add(new NavNode
         {
+            Name = "LightningChart Samples",
+            Status = EquipmentStatus.Normal,
+            IsExpanded = true,
+            Children = [.. LightningChartSampleTypes.Select(type => new NavNode
+            {
+                Name = type,
+                ChartType = type,
+                Status = EquipmentStatus.Normal
+            })]
+        });
+
+        NavTree.Add(new NavNode
+        {
             Name = "Section A", Status = EquipmentStatus.Danger, IsExpanded = true,
             Children =
             [
@@ -375,6 +416,12 @@ public class MainViewModel : ViewModelBase
     private void UpdateBreadcrumb()
     {
         if (_selectedNode == null) return;
+        if (_selectedNode.IsChartNode)
+        {
+            Breadcrumb = $"Machinery Health / LightningChart Samples / {_selectedNode.Name}";
+            return;
+        }
+
         Breadcrumb = $"Machinery Health / Unit 1 / {_selectedNode.Name}";
     }
 }

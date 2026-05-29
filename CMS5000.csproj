@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LightningChart" Version="12.*"/>
     <PackageReference Include="Velopack" Version="0.*"/>
     <PackageReference Include="System.Drawing.Common" Version="10.*"/>
     <PackageReference Include="supabase-csharp" Version="0.*"/>
@@ -23,20 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="LightningChart.DirectX">
-      <HintPath>$(ProgramW6432)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.DirectX.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="LightningChart.WPF.ChartingMVVM.NET8">
-      <HintPath>$(ProgramW6432)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.WPF.ChartingMVVM.NET8.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="LightningChart.MathCoreNET">
-      <HintPath>$(ProgramW6432)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.MathCoreNET.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="WpfToolkit">
-      <HintPath>$(ProgramW6432)\LightningChart\LightningChart .NET SDK v.12\LibNET\WpfToolkit.dll</HintPath>
+      <HintPath>libs\WpfToolkit.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>

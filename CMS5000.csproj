@@ -30,6 +30,14 @@
     </Reference>
   </ItemGroup>
 
+  <!-- LightningChart(net8)가 런타임에서 찾는 System.Windows.Forms를 자립실행 패키지에 포함 -->
+  <ItemGroup>
+    <Content Include="libs\System.Windows.Forms.dll" Link="System.Windows.Forms.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="CMS5000.ico"/>
     <Resource Include="Images\autosyslogo.png"/>

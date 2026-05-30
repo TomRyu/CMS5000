@@ -10,14 +10,14 @@ permissions:
 
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
       - name: 소스 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: .NET 9 설정
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -57,7 +57,7 @@ jobs:
             --outputDir releases
 
       - name: GitHub Release 생성 및 패키지 첨부
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.ver }}
           name: "CMS-5000 v${{ steps.version.outputs.ver }}"
@@ -78,7 +78,7 @@ jobs:
             > Windows 10 이상 필요 · .NET 런타임 불필요 (자립실행 패키지)
 
       - name: 설치 안내 페이지 배포 (GitHub Pages)
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: installer

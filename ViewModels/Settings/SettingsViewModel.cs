@@ -27,6 +27,14 @@ public class SettingsViewModel : ViewModelBase
     public bool IsLarge  => _fontSizePreset == FontSizePreset.Large;
 
     public RelayCommand<string> SetFontSizeCommand { get; }
+    public RelayCommand CheckUpdateCommand { get; }
+
+    // 프로그램 정보 / 버전 이력
+    public string CurrentVersion { get; } = UpdateService.GetCurrentVersionText();
+    public List<ChangelogEntry> Changelog { get; } = ChangelogService.Load();
+
+    private string _updateStatus = "";
+    public string UpdateStatus { get => _updateStatus; set => SetProperty(ref _updateStatus, value); }
 
     public SettingsViewModel()
     {
@@ -35,6 +43,23 @@ public class SettingsViewModel : ViewModelBase
             if (Enum.TryParse<FontSizePreset>(preset, out var p))
                 FontSizePreset = p;
         });
+
+        CheckUpdateCommand = new RelayCommand(_ => _ = CheckUpdateAsync());
+    }
+
+    private async Task CheckUpdateAsync()
+    {
+        await UpdateService.CheckDownloadAndApplyAsync(
+            status => UpdateStatus = status,
+            versionToApply =>
+            {
+                var result = System.Windows.MessageBox.Show(
+                    $"새 버전 v{versionToApply} 업데이트가 준비되었습니다.\n지금 재시작해서 적용하시겠습니까?",
+                    "업데이트 준비 완료",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
+                return result == System.Windows.MessageBoxResult.Yes;
+            });
     }
 
     public string DisplayName { get; private set; } = "";

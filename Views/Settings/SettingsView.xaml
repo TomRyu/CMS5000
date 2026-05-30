@@ -221,6 +221,95 @@
                 </StackPanel>
             </Border>
 
+            <!-- 프로그램 정보 / 버전 이력 카드 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="프로그램 정보" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,16"/>
+
+                    <!-- 버전 헤더 + 업데이트 확인 -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="CMS-5000" FontSize="16" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center"/>
+                                <Border Background="{StaticResource AccentBluePaleBrush}" CornerRadius="4"
+                                        Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentVersion, StringFormat='현재 버전 v{0}'}"
+                                               FontSize="12" Foreground="{StaticResource AccentBlueBrush}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="㈜오토시스 · 설비 상태 모니터링"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="13" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+                            <Button Content="업데이트 확인" Command="{Binding CheckUpdateCommand}"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Padding="14,8" Cursor="Hand"/>
+                            <TextBlock Text="{Binding UpdateStatus}" FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Right" TextWrapping="Wrap"
+                                       MaxWidth="180" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 구분선 -->
+                    <Border Height="1" Background="{StaticResource CardBorderBrush}" Margin="0,0,0,16"/>
+
+                    <TextBlock Text="변경 이력" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
+
+                    <!-- 버전별 타임라인 -->
+                    <ItemsControl ItemsSource="{Binding Changelog}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Expander IsExpanded="{Binding IsLatest}" Margin="0,0,0,2">
+                                    <Expander.Header>
+                                        <TextBlock Text="{Binding Header}" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </Expander.Header>
+                                    <ItemsControl ItemsSource="{Binding Changes}" Margin="22,6,0,12">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="0,3">
+                                                    <!-- 변경 성격 태그 (신규=파랑 / 개선=초록 / 버그수정=주황) -->
+                                                    <Border CornerRadius="4" Padding="6,1" MinWidth="58"
+                                                            Margin="0,1,10,0" VerticalAlignment="Top">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Kind}" Value="New">
+                                                                        <Setter Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Kind}" Value="Improve">
+                                                                        <Setter Property="Background" Value="{StaticResource StatusGoodBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Kind}" Value="Fix">
+                                                                        <Setter Property="Background" Value="{StaticResource StatusWarningBrush}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{Binding KindLabel}" FontSize="11"
+                                                                   Foreground="White" HorizontalAlignment="Center"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center" MaxWidth="460"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Expander>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -21,13 +21,14 @@ service_role 키는 **함수 환경변수에만** 존재한다.
 supabase login
 supabase link --project-ref xfoipljsksrqgrwzqhza
 
-# 3) 함수 시크릿 설정 (service_role 키와 JWT 서명용 비밀)
-supabase secrets set SERVICE_ROLE_KEY="<현재 service_role 키>"
+# 3) 함수 시크릿 설정 — JWT 서명용 비밀만.
+#    SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 는 Supabase가 함수에 자동 주입하므로 설정 불필요.
+#    (admin.ts가 SERVICE_ROLE_KEY → SUPABASE_SERVICE_ROLE_KEY 순으로 읽음)
 supabase secrets set JWT_SECRET="<충분히 긴 무작위 문자열>"
 #   JWT_SECRET 예시 생성:  openssl rand -base64 48
 
 # 4) DB 마이그레이션 적용 (RLS 잠금 + 잠금테이블)
-supabase db push
+#    supabase db push  (DB 비밀번호 필요) 또는 Management API/SQL 에디터로 *_rls_lockdown.sql 실행
 
 # 5) 함수 배포 (플랫폼 JWT 검증 끔 — config.toml에도 명시됨)
 supabase functions deploy api --no-verify-jwt
@@ -39,7 +40,7 @@ supabase functions deploy api --no-verify-jwt
 1. 위 4·5단계로 함수/RLS 적용
 2. 수정된 클라이언트(anon 키만 탑재) 릴리스
 3. **service_role 키 회전** (대시보드 → Settings → API) → 구버전 클라이언트 접속 차단(=강제 업데이트)
-   - 회전 후 3단계 `supabase secrets set SERVICE_ROLE_KEY=...`를 **새 키로 다시 설정**해야 함.
+   - 함수는 자동 주입되는 `SUPABASE_SERVICE_ROLE_KEY`를 쓰므로 회전 후 별도 재설정 불필요.
 
 ## 동작 확인
 ```bash

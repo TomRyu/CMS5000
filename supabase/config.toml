@@ -1,0 +1,6 @@
+project_id = "xfoipljsksrqgrwzqhza"
+
+# api 함수는 커스텀 JWT(우리 JWT_SECRET 서명)를 직접 검증하므로
+# 플랫폼 기본 JWT 검증을 끈다. (대신 게이트웨이 통과용 apikey=anon 헤더는 계속 필요)
+[functions.api]
+verify_jwt = false

@@ -25,9 +25,9 @@ jobs:
         run: dotnet tool install -g vpk
 
       - name: appsettings.json 생성 (Secrets → 파일)
-        # 보안: service_role 대신 공개 anon 키만 탑재. 민감 작업은 Edge Functions가 처리.
+        # 보안: 공개 publishable 키만 탑재(레거시 anon/service_role 미사용). 민감 작업은 Edge Functions가 처리.
         run: |
-          $content = '{"Supabase":{"Url":"${{ secrets.SUPABASE_URL }}","AnonKey":"${{ secrets.SUPABASE_ANON_KEY }}"}}'
+          $content = '{"Supabase":{"Url":"${{ secrets.SUPABASE_URL }}","ApiKey":"${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"}}'
           [System.IO.File]::WriteAllText("appsettings.json", $content, [System.Text.Encoding]::UTF8)
 
       - name: 의존성 복원

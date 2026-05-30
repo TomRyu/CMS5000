@@ -1,6 +1,13 @@
 {
   "entries": [
     {
+      "version": "1.0.47",
+      "date": "2026-05-30",
+      "changes": [
+        { "kind": "Improve", "text": "서버 접속에 공개 전용 키(publishable)를 사용하도록 전환해 보안 키 체계를 정리했습니다." }
+      ]
+    },
+    {
       "version": "1.0.46",
       "date": "2026-05-30",
       "changes": [

@@ -30,8 +30,9 @@ public static class ApiService
         var sb = doc.RootElement.GetProperty("Supabase");
         var url = sb.GetProperty("Url").GetString()
             ?? throw new InvalidOperationException("Supabase Url이 설정되지 않았습니다.");
-        _anonKey = sb.GetProperty("AnonKey").GetString()
-            ?? throw new InvalidOperationException("Supabase AnonKey가 설정되지 않았습니다.");
+        // 공개 클라이언트 키(publishable). 게이트웨이 통과용 apikey 헤더로 사용.
+        _anonKey = sb.GetProperty("ApiKey").GetString()
+            ?? throw new InvalidOperationException("Supabase ApiKey가 설정되지 않았습니다.");
         _baseUrl = $"{url.TrimEnd('/')}/functions/v1/api";
     }
 

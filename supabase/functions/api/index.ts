@@ -1,4 +1,5 @@
-import { compareSync, genSaltSync, hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+// 순수 JS 구현(Web Worker 비의존) → Supabase Edge 런타임에서 안전. .NET BCrypt.Net($2a/$2b)과 호환.
+import bcrypt from "npm:bcryptjs@2.4.3";
 import { corsHeaders, error, json } from "../_shared/cors.ts";
 import { admin } from "../_shared/admin.ts";
 import { signSession, verifySession } from "../_shared/jwt.ts";
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
       }
       if (!user.is_active) return error("비활성화된 계정입니다. 관리자에게 문의하세요.", 403);
 
-      if (!compareSync(password, user.password_hash)) {
+      if (!bcrypt.compareSync(password, user.password_hash)) {
         await recordFailure(username);
         return error("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
       }
@@ -102,10 +103,10 @@ Deno.serve(async (req) => {
       const { data: me } = await admin()
         .from("cms_users").select("password_hash").eq("id", claims.sub).maybeSingle();
       if (!me) return error("사용자를 찾을 수 없습니다.", 404);
-      if (!compareSync(currentPassword, me.password_hash)) return error("현재 비밀번호가 올바르지 않습니다.");
-      if (compareSync(newPassword, me.password_hash)) return error("기존과 다른 비밀번호를 사용하세요.");
+      if (!bcrypt.compareSync(currentPassword, me.password_hash)) return error("현재 비밀번호가 올바르지 않습니다.");
+      if (bcrypt.compareSync(newPassword, me.password_hash)) return error("기존과 다른 비밀번호를 사용하세요.");
 
-      const hash = hashSync(newPassword, genSaltSync(11));
+      const hash = bcrypt.hashSync(newPassword, 11);
       await admin().from("cms_users").update({ password_hash: hash }).eq("id", claims.sub);
       return json({ ok: true });
     }
@@ -129,7 +130,7 @@ Deno.serve(async (req) => {
         if (b.displayName !== undefined) patch.display_name = b.displayName;
         if (b.role !== undefined) patch.role = b.role;
         if (b.isActive !== undefined) patch.is_active = b.isActive;
-        if (b.password) patch.password_hash = hashSync(b.password, genSaltSync(11));
+        if (b.password) patch.password_hash = bcrypt.hashSync(b.password, 11);
         const { data, error: e } = await admin()
           .from("cms_users").update(patch).eq("id", b.id).select("*").maybeSingle();
         if (e) return error(e.message, 400);
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
           display_name: b.displayName,
           role: b.role ?? "Operator",
           is_active: true,
-          password_hash: hashSync(b.password, genSaltSync(11)),
+          password_hash: bcrypt.hashSync(b.password, 11),
         }).select("*").maybeSingle();
         if (e) return error(e.message, 400);
         return json(mapUser(data));

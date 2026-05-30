@@ -29,7 +29,7 @@ class Program
 
         AppLogService.Info("시스템", $"CMS-5000 시작 (v{UpdateService.GetCurrentVersionText()})");
 
-        if (!ConnectSupabaseWithRetry())
+        if (!ConnectApiWithRetry())
             return;
 
         var app = new App();
@@ -40,20 +40,28 @@ class Program
         GC.KeepAlive(_instanceMutex);
     }
 
-    /// <summary>Supabase 연결. 실패 시 재시도/종료를 사용자에게 묻는다.</summary>
-    private static bool ConnectSupabaseWithRetry()
+    /// <summary>API(Edge Functions) 초기화 + 헬스체크. 실패 시 재시도/종료를 사용자에게 묻는다.</summary>
+    private static bool ConnectApiWithRetry()
     {
+        try { ApiService.Initialize(); }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"설정 로드 실패:\n\n{ex.Message}\n\nappsettings.json을 확인하세요.",
+                "CMS-5000 시작 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+
         while (true)
         {
             try
             {
-                Task.Run(async () => await SupabaseService.InitializeAsync()).GetAwaiter().GetResult();
-                AppLogService.Success("시스템", "Supabase 연결 완료");
+                Task.Run(async () => await ApiService.EnsureReachableAsync()).GetAwaiter().GetResult();
+                AppLogService.Success("시스템", "서버 연결 완료");
                 return true;
             }
             catch (Exception ex)
             {
-                AppLogService.Error("시스템", $"Supabase 연결 실패: {ex.Message}");
+                AppLogService.Error("시스템", $"서버 연결 실패: {ex.Message}");
                 var result = MessageBox.Show(
                     $"서버 연결에 실패했습니다.\n\n{ex.Message}\n\n네트워크 상태를 확인 후 다시 시도하시겠습니까?\n" +
                     "([예] 재연결 / [아니요] 종료)",

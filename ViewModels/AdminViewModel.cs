@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using CMS5000.Models;
 using CMS5000.Services;
 using CMS5000.ViewModels.Base;
-using Postgrest;
 
 namespace CMS5000.ViewModels;
 
@@ -69,7 +68,11 @@ public class AdminViewModel : ViewModelBase
         EditUserCommand     = new RelayCommand<CmsUser>(u => { if (u != null) StartEditUser(u); });
         DeleteUserCommand   = new RelayCommand<CmsUser>(u => { if (u != null) _ = DeleteUserAsync(u); });
         ToggleActiveCommand = new RelayCommand<CmsUser>(u => { if (u != null) _ = ToggleActiveAsync(u); });
+    }
 
+    /// <summary>로그인(관리자) 후 호출해 목록·이력을 적재.</summary>
+    public void LoadAll()
+    {
         _ = LoadUsersAsync();
         _ = LoadLogsAsync();
     }
@@ -80,12 +83,10 @@ public class AdminViewModel : ViewModelBase
         StatusMessage = "";
         try
         {
-            var response = await SupabaseService.Client.From<CmsUser>()
-                .Order("created_at", Constants.Ordering.Ascending)
-                .Get();
-            Users = new ObservableCollection<CmsUser>(response.Models);
+            var (data, error) = await ApiService.GetAsync<List<CmsUser>>("/users");
+            if (error != null) { StatusMessage = $"목록 로드 실패: {error}"; return; }
+            Users = new ObservableCollection<CmsUser>(data ?? []);
         }
-        catch (Exception ex) { StatusMessage = $"목록 로드 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 
@@ -94,13 +95,10 @@ public class AdminViewModel : ViewModelBase
         IsLogsBusy = true;
         try
         {
-            var response = await SupabaseService.Client.From<LoginLog>()
-                .Order("logged_at", Constants.Ordering.Descending)
-                .Limit(200)
-                .Get();
-            LoginLogs = new ObservableCollection<LoginLog>(response.Models);
+            var (data, error) = await ApiService.GetAsync<List<LoginLog>>("/login-logs?limit=200");
+            if (error != null) { StatusMessage = $"이력 로드 실패: {error}"; return; }
+            LoginLogs = new ObservableCollection<LoginLog>(data ?? []);
         }
-        catch (Exception ex) { StatusMessage = $"이력 로드 실패: {ex.Message}"; }
         finally { IsLogsBusy = false; }
     }
 
@@ -160,33 +158,35 @@ public class AdminViewModel : ViewModelBase
         IsBusy = true;
         try
         {
+            string? error;
             if (IsAddingNew)
             {
                 if (string.IsNullOrWhiteSpace(NewPassword)) { StatusMessage = "비밀번호를 입력하세요."; return; }
-                var newUser = new CmsUser
+                (_, error) = await ApiService.PostAsync<CmsUser>("/users", new
                 {
-                    Username     = EditUsername.Trim(),
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(NewPassword, 11),
-                    Role         = EditRole,
-                    DisplayName  = EditDisplayName.Trim(),
-                    IsActive     = true
-                };
-                await SupabaseService.Client.From<CmsUser>().Insert(newUser);
+                    username    = EditUsername.Trim(),
+                    displayName = EditDisplayName.Trim(),
+                    role        = EditRole,
+                    password    = NewPassword
+                });
+                if (error != null) { StatusMessage = $"저장 실패: {error}"; return; }
                 StatusMessage = $"'{EditUsername}' 사용자가 추가되었습니다.";
             }
             else if (_selectedUser != null)
             {
-                _selectedUser.DisplayName = EditDisplayName.Trim();
-                _selectedUser.Role        = EditRole;
-                if (!string.IsNullOrWhiteSpace(NewPassword))
-                    _selectedUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(NewPassword, 11);
-                await SupabaseService.Client.From<CmsUser>().Update(_selectedUser);
+                (_, error) = await ApiService.PostAsync<CmsUser>("/users", new
+                {
+                    id          = _selectedUser.Id,
+                    displayName = EditDisplayName.Trim(),
+                    role        = EditRole,
+                    password    = string.IsNullOrWhiteSpace(NewPassword) ? null : NewPassword
+                });
+                if (error != null) { StatusMessage = $"저장 실패: {error}"; return; }
                 StatusMessage = $"'{EditUsername}' 사용자가 수정되었습니다.";
             }
             IsEditing = false;
             await LoadUsersAsync();
         }
-        catch (Exception ex) { StatusMessage = $"저장 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 
@@ -217,15 +217,13 @@ public class AdminViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            await SupabaseService.Client.From<CmsUser>()
-                .Filter("id", Constants.Operator.Equals, user.Id)
-                .Delete();
+            var (ok, error) = await ApiService.PostOkAsync("/users/delete", new { id = user.Id });
+            if (!ok) { StatusMessage = $"삭제 실패: {error}"; return; }
             StatusMessage = $"'{user.Username}' 사용자가 삭제되었습니다.";
             AppLogService.Warning("관리", $"사용자 삭제: {user.DisplayName}({user.Username})");
             if (IsEditing && _selectedUser?.Id == user.Id) CancelEdit();
             await LoadUsersAsync();
         }
-        catch (Exception ex) { StatusMessage = $"삭제 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 
@@ -234,15 +232,11 @@ public class AdminViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            user.IsActive = !user.IsActive;
-            await SupabaseService.Client.From<CmsUser>().Update(user);
-            StatusMessage = $"'{user.Username}' 계정 {(user.IsActive ? "활성화" : "비활성화")} 완료";
+            var (_, error) = await ApiService.PostAsync<CmsUser>("/users",
+                new { id = user.Id, isActive = !user.IsActive });
+            if (error != null) { StatusMessage = $"상태 변경 실패: {error}"; return; }
+            StatusMessage = $"'{user.Username}' 계정 {(!user.IsActive ? "활성화" : "비활성화")} 완료";
             await LoadUsersAsync();
-        }
-        catch (Exception ex)
-        {
-            user.IsActive = !user.IsActive;
-            StatusMessage = $"상태 변경 실패: {ex.Message}";
         }
         finally { IsBusy = false; }
     }

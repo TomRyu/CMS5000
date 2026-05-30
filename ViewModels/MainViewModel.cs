@@ -10,7 +10,6 @@ using CMS5000.ViewModels.Expert;
 using CMS5000.ViewModels.Maintenance;
 using CMS5000.ViewModels.Operator;
 using CMS5000.ViewModels.Settings;
-using Postgrest;
 
 namespace CMS5000.ViewModels;
 
@@ -134,7 +133,7 @@ public class MainViewModel : ViewModelBase
         BuildNavTree();
         LoadSavedCredentials();
         _ = CheckForUpdatesAsync();
-        _ = LoadLoginUsernamesAsync();
+        LoadLoginUsernames();
     }
 
     public void SelectNavNode(NavNode node)
@@ -207,6 +206,10 @@ public class MainViewModel : ViewModelBase
         IsPasswordVisible = false;
         SettingsVM.LoadFromCurrentUser();
         SessionTimeoutService.ResetActivity();
+        LoadLoginUsernames();
+
+        if (role == UserRole.Admin)
+            AdminVM.LoadAll();
 
         PersistCredentials(LoginUsername, LoginPassword);
     }
@@ -232,7 +235,7 @@ public class MainViewModel : ViewModelBase
         LoginError = "";
         IsPasswordVisible = false;
         LoadSavedCredentials();
-        _ = LoadLoginUsernamesAsync();
+        LoadLoginUsernames();
     }
 
     private static string CredentialsPath =>
@@ -437,22 +440,22 @@ public class MainViewModel : ViewModelBase
             });
     }
 
-    private async Task LoadLoginUsernamesAsync()
+    // 로그인 전 아이디 자동완성은 이 PC에 저장된 계정만 사용한다.
+    // (예전엔 로그인 이력 테이블을 조회했으나, 인증 전 DB 접근/아이디 노출을 없애기 위해 로컬 한정으로 변경)
+    private void LoadLoginUsernames()
     {
+        LoginUsernames.Clear();
         try
         {
-            var response = await SupabaseService.Client.From<LoginLog>()
-                .Order("logged_at", Constants.Ordering.Descending)
-                .Limit(500)
-                .Get();
+            if (!File.Exists(CredentialsPath)) return;
+            var data = JsonSerializer.Deserialize<SavedCredentials>(File.ReadAllText(CredentialsPath));
+            if (data == null) return;
 
-            var distinct = response.Models
-                .Select(l => l.Username)
-                .Distinct()
-                .ToList();
+            var names = new List<string>(data.Passwords.Keys);
+            if (!string.IsNullOrEmpty(data.LastUsername) && !names.Contains(data.LastUsername))
+                names.Insert(0, data.LastUsername);
 
-            LoginUsernames.Clear();
-            foreach (var name in distinct)
+            foreach (var name in names.Distinct())
                 LoginUsernames.Add(name);
         }
         catch { }

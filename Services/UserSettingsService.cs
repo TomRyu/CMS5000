@@ -11,7 +11,7 @@ public static class UserSettingsService
         try
         {
             user.FontSize = preset.ToString();
-            await SupabaseService.Client.From<CmsUser>().Update(user);
+            await ApiService.PostOkAsync("/set-font-size", new { fontSize = preset.ToString() });
         }
         catch { }
     }

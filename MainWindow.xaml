@@ -13,6 +13,7 @@
         xmlns:adView="clr-namespace:CMS5000.Views.Admin"
         xmlns:stVm="clr-namespace:CMS5000.ViewModels.Settings"
         xmlns:stView="clr-namespace:CMS5000.Views.Settings"
+        xmlns:logView="clr-namespace:CMS5000.Views.Log"
         xmlns:models="clr-namespace:CMS5000.Models"
         Title="{Binding WindowTitle}"
         Icon="pack://application:,,,/CMS5000.ico"
@@ -37,6 +38,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type stVm:SettingsViewModel}">
             <stView:SettingsView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type adVm:LogViewModel}">
+            <logView:LogView DataContext="{Binding}"/>
         </DataTemplate>
 
         <!-- NavNode status dot converter (inline style trigger) -->
@@ -454,6 +458,38 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Report">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 로그 -->
+                        <Button Width="72" Height="72" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="Log"
+                                ToolTip="로그">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE81C;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="로그" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="Log">
                                             <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
                                             <Setter TargetName="ico" Property="Foreground" Value="White"/>
                                             <Setter TargetName="lbl" Property="Foreground" Value="White"/>

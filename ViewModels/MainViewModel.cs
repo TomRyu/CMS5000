@@ -81,6 +81,7 @@ public class MainViewModel : ViewModelBase
     public ExpertViewModel      ExpertVM      { get; } = new();
     public AdminViewModel       AdminVM       { get; } = new();
     public SettingsViewModel    SettingsVM    { get; } = new();
+    public LogViewModel         LogVM         { get; } = new();
 
     public ObservableCollection<NavNode>  NavTree        { get; } = [];
     public ObservableCollection<string>  LoginUsernames { get; } = [];
@@ -106,6 +107,12 @@ public class MainViewModel : ViewModelBase
                 CurrentView = AdminVM;
             else if (icon == "Settings")
                 CurrentView = SettingsVM;
+            else if (icon == "Log")
+            {
+                CurrentView = LogVM;
+                Breadcrumb = "Machinery Health / 로그";
+            }
+            AppLogService.Info("탐색", $"메뉴 이동: {NavDisplayName(icon)}");
         });
         ToggleTreeCommand = new RelayCommand(_ => IsTreePanelVisible = !IsTreePanelVisible);
         TogglePasswordVisibilityCommand = new RelayCommand(_ => IsPasswordVisible = !IsPasswordVisible);
@@ -140,7 +147,23 @@ public class MainViewModel : ViewModelBase
         CurrentView = ExpertVM;
         ActiveNavIcon = "Diagnosis";
         Breadcrumb = $"Machinery Health / LightningChart Samples / {node.Name}";
+        AppLogService.Info("차트", $"LightningChart 샘플 열기: {node.Name}");
     }
+
+    private static string NavDisplayName(string icon) => icon switch
+    {
+        "Dashboard"  => "대시보드",
+        "Equipment"  => "설비",
+        "Alarm"      => "알람",
+        "Analysis"   => "분석",
+        "Diagnosis"  => "진단",
+        "Inspection" => "점검/이력",
+        "Report"     => "보고서",
+        "Log"        => "로그",
+        "Settings"   => "설정",
+        "Admin"      => "사용자 관리",
+        _            => icon
+    };
 
     private async Task LoginAsync()
     {
@@ -152,10 +175,12 @@ public class MainViewModel : ViewModelBase
         if (!success)
         {
             LoginError = error;
+            AppLogService.Warning("인증", $"로그인 실패: {error}", LoginUsername);
             return;
         }
 
         var role = AuthService.GetCurrentRole();
+        AppLogService.Success("인증", $"로그인 성공 ({role})", AuthService.CurrentUser?.DisplayName);
         CurrentRole = role;
         IsLoginVisible = false;
 
@@ -187,6 +212,7 @@ public class MainViewModel : ViewModelBase
 
     private void Logout()
     {
+        AppLogService.Info("인증", "로그아웃", AuthService.CurrentUser?.DisplayName);
         AuthService.Logout();
         IsLoginVisible = true;
         IsTreePanelVisible = true;
@@ -382,6 +408,7 @@ public class MainViewModel : ViewModelBase
             status => UpdateStatus = status,
             versionToApply =>
             {
+                AppLogService.Info("업데이트", $"새 버전 v{versionToApply} 다운로드 완료");
                 if (!IsLoginVisible)
                 {
                     // 로그인 중 또는 이후에는 강제 재시작하지 않음 — 다음 실행 시 자동 적용

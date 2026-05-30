@@ -204,6 +204,16 @@ public class AdminViewModel : ViewModelBase
             StatusMessage = "현재 로그인된 계정은 삭제할 수 없습니다.";
             return;
         }
+
+        var confirm = System.Windows.MessageBox.Show(
+            $"'{user.DisplayName}({user.Username})' 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+            "사용자 삭제 확인",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning,
+            System.Windows.MessageBoxResult.No);
+        if (confirm != System.Windows.MessageBoxResult.Yes)
+            return;
+
         IsBusy = true;
         try
         {
@@ -211,6 +221,7 @@ public class AdminViewModel : ViewModelBase
                 .Filter("id", Constants.Operator.Equals, user.Id)
                 .Delete();
             StatusMessage = $"'{user.Username}' 사용자가 삭제되었습니다.";
+            AppLogService.Warning("관리", $"사용자 삭제: {user.DisplayName}({user.Username})");
             if (IsEditing && _selectedUser?.Id == user.Id) CancelEdit();
             await LoadUsersAsync();
         }

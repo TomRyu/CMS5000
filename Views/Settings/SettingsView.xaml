@@ -221,6 +221,85 @@
                 </StackPanel>
             </Border>
 
+            <!-- 보안 / 세션 카드 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="보안" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,16"/>
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="자동 로그아웃" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="설정한 시간 동안 입력이 없으면 자동으로 로그아웃됩니다."
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ComboBox HorizontalAlignment="Right" VerticalAlignment="Center" Width="130"
+                                  ItemsSource="{Binding TimeoutOptions}"
+                                  DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding SessionTimeoutMinutes}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 비밀번호 변경 카드 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="비밀번호 변경" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="8자 이상으로 설정하세요."
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="12" Margin="0,0,0,16"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="현재 비밀번호"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <PasswordBox x:Name="CurrentPwBox" Grid.Row="0" Grid.Column="1"
+                                     Padding="8,6" Margin="0,0,0,10" MaxWidth="280" HorizontalAlignment="Left" MinWidth="240"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="새 비밀번호"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <PasswordBox x:Name="NewPwBox" Grid.Row="1" Grid.Column="1"
+                                     Padding="8,6" Margin="0,0,0,10" MaxWidth="280" HorizontalAlignment="Left" MinWidth="240"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="새 비밀번호 확인"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center"/>
+                        <PasswordBox x:Name="ConfirmPwBox" Grid.Row="2" Grid.Column="1"
+                                     Padding="8,6" MaxWidth="280" HorizontalAlignment="Left" MinWidth="240"/>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <Button x:Name="ChangePwButton" Content="비밀번호 변경"
+                                Click="ChangePwButton_Click"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Padding="14,8" Cursor="Hand"
+                                IsEnabled="{Binding CanChangePw}"/>
+                        <TextBlock Text="{Binding ChangePwStatus}" VerticalAlignment="Center"
+                                   Margin="14,0,0,0" TextWrapping="Wrap" MaxWidth="320"
+                                   Visibility="{Binding HasChangePwStatus, Converter={StaticResource BoolToVis}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource StatusDangerBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ChangePwSuccess}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource StatusGoodBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- 프로그램 정보 / 버전 이력 카드 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>

@@ -206,8 +206,18 @@ public class MainViewModel : ViewModelBase
         IsTreePanelVisible = role != UserRole.Admin;
         IsPasswordVisible = false;
         SettingsVM.LoadFromCurrentUser();
+        SessionTimeoutService.ResetActivity();
 
         PersistCredentials(LoginUsername, LoginPassword);
+    }
+
+    /// <summary>무활동 세션 타임아웃에 의한 자동 로그아웃.</summary>
+    public void TriggerAutoLogout()
+    {
+        if (IsLoginVisible) return;
+        AppLogService.Warning("인증", "무활동 세션 타임아웃으로 자동 로그아웃", AuthService.CurrentUser?.DisplayName);
+        Logout();
+        LoginError = "자동 로그아웃되었습니다. 다시 로그인하세요.";
     }
 
     private void Logout()

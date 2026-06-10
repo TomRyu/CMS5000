@@ -15,7 +15,7 @@ namespace CMS5000.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    private static readonly string[] LightningChartSampleTypes =
+    private static readonly string[] ChartSampleTypes =
     [
         "Trend",
         "Spectrum",
@@ -145,8 +145,8 @@ public class MainViewModel : ViewModelBase
         ExpertVM.OpenChartSample(node.ChartType);
         CurrentView = ExpertVM;
         ActiveNavIcon = "Diagnosis";
-        Breadcrumb = $"Machinery Health / LightningChart Samples / {node.Name}";
-        AppLogService.Info("차트", $"LightningChart 샘플 열기: {node.Name}");
+        Breadcrumb = $"Machinery Health / ScottPlot Samples / {node.Name}";
+        AppLogService.Info("차트", $"ScottPlot 샘플 열기: {node.Name}");
     }
 
     private static string NavDisplayName(string icon) => icon switch
@@ -333,10 +333,10 @@ public class MainViewModel : ViewModelBase
     {
         NavTree.Add(new NavNode
         {
-            Name = "LightningChart Samples",
+            Name = "ScottPlot Samples",
             Status = EquipmentStatus.Normal,
             IsExpanded = true,
-            Children = [.. LightningChartSampleTypes.Select(type => new NavNode
+            Children = [.. ChartSampleTypes.Select(type => new NavNode
             {
                 Name = type,
                 ChartType = type,
@@ -466,7 +466,7 @@ public class MainViewModel : ViewModelBase
         if (_selectedNode == null) return;
         if (_selectedNode.IsChartNode)
         {
-            Breadcrumb = $"Machinery Health / LightningChart Samples / {_selectedNode.Name}";
+            Breadcrumb = $"Machinery Health / ScottPlot Samples / {_selectedNode.Name}";
             return;
         }
 

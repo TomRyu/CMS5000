@@ -81,8 +81,8 @@
 
                     <Border Grid.Row="1" Background="{StaticResource ContentBgBrush}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="4">
-                        <controls:LightningChartSampleView PlotType="{Binding ActiveTab.PlotType}"
-                                                           EquipmentName="{Binding SelectedEquipment}"/>
+                        <controls:ScottPlotSampleView PlotType="{Binding ActiveTab.PlotType}"
+                                                       EquipmentName="{Binding SelectedEquipment}"/>
                     </Border>
                 </Grid>
             </Border>

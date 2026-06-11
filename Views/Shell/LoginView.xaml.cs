@@ -185,6 +185,16 @@ public partial class LoginView : UserControl
             }
         }
 
+        if (e.Key == Key.Tab && sender == UsernameBox)
+        {
+            UsernamePopup.IsOpen = false;
+            var target = (DataContext is MainViewModel v && v.IsPasswordVisible)
+                ? (UIElement)PwdTextBox : PwdBox;
+            target.Focus();
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Enter && DataContext is MainViewModel vm)
             vm.LoginCommand.Execute(null);
     }

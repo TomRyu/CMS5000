@@ -4,8 +4,8 @@
 진동 분석 · 이상 진단 · 점검 이력 관리.
 
 ## 기술 스택
-- **WPF / .NET 9** (`net9.0-windows`), MVVM
-- **LightningChart** (진동 차트, NuGet net8 빌드)
+- **WPF / .NET 9** (`net9.0-windows10.0.19041.0`), MVVM
+- **ScottPlot.WPF** (진동 차트)
 - **Velopack** (자동 업데이트 + 설치 패키지)
 - **Supabase** (인증 · 데이터, `supabase-csharp`)
 - 언어: 한국어 (UI · 커밋 메시지 · 주석 모두 한국어)
@@ -34,8 +34,10 @@ dotnet run                 # 실행 (로그인 → 메뉴)
 - `Themes/` — `Colors.xaml`, `Styles.xaml`. 색/스타일은 항상 리소스 키 사용(`AccentBlueBrush`, `StatusGoodBrush`, `CardStyle`, `AccentButtonStyle` 등). 하드코딩 금지.
 
 ## 핵심 주의사항
-- **LightningChart는 `UseWindowsForms=true`가 필수.** net8 빌드가 런타임에 `System.Windows.Forms`를 요구하는데, WPF만 켜면 어셈블리가 없어 차트 진입 시 크래시. 정품 net9 어셈블리를 포함시켜 버전 롤포워드로 해결. (과거의 net8 DLL 번들 + AssemblyResolve 핵은 제거됨 — 되살리지 말 것.)
-- `UseWindowsForms` 때문에 `System.Windows.Forms`/`System.Drawing` 전역 using이 자동 주입되어 WPF 타입과 CS0104 충돌 → csproj에서 `<Using Remove>`로 제거해 둠.
+- LightningChart 관련 코드와 패키지 참조는 제거됨. 다시 추가하지 말 것.
+- 차트 구현은 `Controls/ScottPlotSampleView.xaml(.cs)`에서 관리한다. Expert 화면은 `ScottPlotSampleView`를 바인딩해 사용한다.
+- ScottPlot은 2D 중심 렌더러이므로 `Surface`, `Spectrogram`, Waterfall/Cascade의 3D 토글은 heatmap 기반 표현으로 대체 구현되어 있다.
+- LightningChart 제거 후 `UseWindowsForms`, `System.Drawing.Common`, `System.Windows.Forms`/`System.Drawing` 전역 using 제거 설정은 더 이상 사용하지 않는다.
 
 ## 개발이력 (CHANGELOG)
 - 설정 → "프로그램 정보" 카드에 버전 이력 표시. 데이터는 번들 `CHANGELOG.json`(오프라인 동작).

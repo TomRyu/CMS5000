@@ -24,9 +24,10 @@ public partial class App : Application
     {
         AppLogService.Error("시스템", $"처리되지 않은 오류: {e.Exception.Message}");
         WriteCrashLog(e.Exception);
-        MessageBox.Show(
-            $"오류가 발생했습니다:\n\n{e.Exception.Message}\n\n로그 파일: {CrashLogPath}",
-            "CMS-5000 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+        // 종료 시 메시지박스 표시 임시 주석 처리 (요청)
+        // MessageBox.Show(
+        //     $"오류가 발생했습니다:\n\n{e.Exception.Message}\n\n로그 파일: {CrashLogPath}",
+        //     "CMS-5000 오류", MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
     }
 

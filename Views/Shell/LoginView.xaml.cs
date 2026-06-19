@@ -63,6 +63,13 @@ public partial class LoginView : UserControl
     {
         if (_selectingUsername || DataContext is not MainViewModel vm) return;
 
+        // 포커스가 없으면 ViewModel에서 자동 설정된 것 — 팝업 열지 않음
+        if (!UsernameBox.IsFocused)
+        {
+            UsernamePopup.IsOpen = false;
+            return;
+        }
+
         var text = UsernameBox.Text;
         if (string.IsNullOrEmpty(text))
         {

@@ -1,0 +1,374 @@
+<Window x:Class="CMS5000.Views.Admin.RackInsertView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:CMS5000.ViewModels.Admin"
+        Title="{Binding DialogTitle}"
+        Width="740" Height="530"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#1E2433">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style x:Key="Input" TargetType="TextBox">
+            <Setter Property="Background" Value="#2D3448"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#3D4A6A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="7,5"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="InputRO" TargetType="TextBox" BasedOn="{StaticResource Input}">
+            <Setter Property="Opacity" Value="0.55"/>
+        </Style>
+        <Style x:Key="Combo" TargetType="ComboBox">
+            <Setter Property="Background" Value="#2D3448"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#3D4A6A"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="28"/>
+        </Style>
+        <Style x:Key="GrpBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="#2D3448"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style x:Key="BluBtn" TargetType="Button">
+            <Setter Property="Padding" Value="22,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#2563EB" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#155FAD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="RedBtn" TargetType="Button">
+            <Setter Property="Padding" Value="22,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#2D3448" CornerRadius="5" BorderBrush="#E53E3E" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#3D1515"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- 상단: Station/Rack/Activity -->
+            <RowDefinition Height="*"/>      <!-- 탭 -->
+            <RowDefinition Height="52"/>     <!-- 버튼 -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ 상단 헤더 ═══════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#161C2D" Padding="20,12" BorderBrush="#2D3448" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="STATION ID :" Style="{StaticResource FieldLabel}" Margin="0,0,8,0"/>
+                <TextBox Text="{Binding StationId}" IsReadOnly="True" Style="{StaticResource InputRO}" Width="60"/>
+
+                <TextBlock Text="RACK ID :" Style="{StaticResource FieldLabel}" Margin="24,0,8,0"/>
+                <TextBox Text="{Binding RackId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}" Width="60"/>
+
+                <CheckBox IsChecked="{Binding Activity}" Content="Activity"
+                          Foreground="#E2E8F0" FontSize="12" Margin="24,0,0,0"
+                          VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ══ 탭 콘텐츠 ══════════════════════════════════════ -->
+        <TabControl Grid.Row="1" Background="#1E2433" BorderBrush="#2D3448"
+                    Margin="0" Padding="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Background" Value="#161C2D"/>
+                    <Setter Property="Foreground" Value="#94A3B8"/>
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="Padding" Value="16,8"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#1E2433"/>
+                            <Setter Property="Foreground" Value="#60A5FA"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- ── Tab 1: INFO ── -->
+            <TabItem Header="INFO...">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,14">
+                    <StackPanel>
+
+                        <!-- Name / Location -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Name" Style="{StaticResource SectionLabel}"/>
+                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Plant (Location)" Style="{StaticResource SectionLabel}"/>
+                                <TextBox Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- TCP/IP -->
+                        <Border Style="{StaticResource GrpBorder}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="TCP/IP" Style="{StaticResource SectionLabel}"/>
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="IP Addr" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding LocalIp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Port" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding LocalPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Serial Port -->
+                        <Border Style="{StaticResource GrpBorder}">
+                            <StackPanel>
+                                <TextBlock Text="Serial Port" Style="{StaticResource SectionLabel}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Port Num." Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding SerialPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Baudrate" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.BaudRates}}"
+                                                  SelectedItem="{Binding BaudRate}"
+                                                  Style="{StaticResource Combo}"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="DataBit" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.DataBits}}"
+                                                  SelectedIndex="{Binding DataBit}"
+                                                  Style="{StaticResource Combo}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="ParityBit" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.ParityBits}}"
+                                                  SelectedIndex="{Binding ParityBit}"
+                                                  Style="{StaticResource Combo}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4">
+                                        <TextBlock Text="StopBit" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                                        <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.StopBits}}"
+                                                  SelectedIndex="{Binding StopBit}"
+                                                  Style="{StaticResource Combo}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Waveform / Trend -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Waveform Interval" Style="{StaticResource SectionLabel}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Text="{Binding WaveformInterval, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource Input}" Width="70"/>
+                                    <TextBlock Text="[sec]" Style="{StaticResource FieldLabel}" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <CheckBox IsChecked="{Binding Trend}" Content="Trend"
+                                          Foreground="#E2E8F0" FontSize="12" Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="STATIC(sec)" Style="{StaticResource FieldLabel}" Margin="0,0,8,0"/>
+                                    <TextBox Text="{Binding StaticTrend, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource Input}" Width="60"
+                                             IsEnabled="{Binding TrendEnabled}"/>
+                                    <TextBlock Text="DYNAMIC(sec)" Style="{StaticResource FieldLabel}" Margin="16,0,8,0"/>
+                                    <TextBox Text="{Binding DynamicTrend, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource Input}" Width="60"
+                                             IsEnabled="{Binding TrendEnabled}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ── Tab 2: Modbus ── -->
+            <TabItem Header="Modbus">
+                <StackPanel Margin="20,14">
+                    <TextBlock Text="Mode" Style="{StaticResource SectionLabel}"/>
+                    <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.ModbusModes}}"
+                              SelectedIndex="{Binding ModbusModeIndex}"
+                              Style="{StaticResource Combo}" Width="160" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+
+                    <!-- TCP fields -->
+                    <StackPanel Visibility="{Binding IsModbusTcp, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="IP Addr" Style="{StaticResource SectionLabel}"/>
+                                <TextBox Text="{Binding ModbusIp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Port" Style="{StaticResource SectionLabel}"/>
+                                <TextBox Text="{Binding ModbusPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Serial fields -->
+                    <StackPanel Visibility="{Binding IsModbusSerial, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Port Num." Style="{StaticResource SectionLabel}"/>
+                                <TextBox Text="{Binding ModSerialPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Baudrate" Style="{StaticResource SectionLabel}"/>
+                                <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.BaudRates}}"
+                                          SelectedItem="{Binding ModBaudRate}"
+                                          Style="{StaticResource Combo}"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="DataBit" Style="{StaticResource SectionLabel}"/>
+                                <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.DataBits}}"
+                                          SelectedIndex="{Binding ModDataBit}"
+                                          Style="{StaticResource Combo}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="ParityBit" Style="{StaticResource SectionLabel}"/>
+                                <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.ParityBits}}"
+                                          SelectedIndex="{Binding ModParityBit}"
+                                          Style="{StaticResource Combo}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="StopBit" Style="{StaticResource SectionLabel}"/>
+                                <ComboBox ItemsSource="{Binding Source={x:Static vm:RackInsertViewModel.StopBits}}"
+                                          SelectedIndex="{Binding ModStopBit}"
+                                          Style="{StaticResource Combo}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
+            <!-- ── Tab 3: Server Connect ── -->
+            <TabItem Header="Server Connect.">
+                <StackPanel Margin="20,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="IP Addr" Style="{StaticResource SectionLabel}"/>
+                            <TextBox Text="{Binding ServerIp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Port" Style="{StaticResource SectionLabel}"/>
+                            <TextBox Text="{Binding ServerPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <!-- ══ 버튼 ═══════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="#161C2D" BorderBrush="#2D3448" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,10">
+                <Button Command="{Binding SaveCommand}" Style="{StaticResource BluBtn}" Margin="0,0,10,0">
+                    <TextBlock Text="INSERT" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                </Button>
+                <Button Command="{Binding CancelCommand}" Style="{StaticResource RedBtn}">
+                    <TextBlock Text="CANCEL" FontSize="12" FontWeight="SemiBold" Foreground="#E53E3E"/>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

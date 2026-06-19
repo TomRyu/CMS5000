@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using CMS5000.Models;
 using CMS5000.Services;
+using CMS5000.ViewModels.Admin;
 using CMS5000.ViewModels.Base;
 using CMS5000.ViewModels.Expert;
 using CMS5000.ViewModels.Maintenance;
@@ -45,6 +46,8 @@ public class MainViewModel : ViewModelBase
     private string _loginError = "";
     private bool _isLoginBusy;
     private string _updateStatus = "";
+    private bool _isDbConnected;
+    private string _connectionStatusText = "CMS-5000 Connecting...";
     private string _windowTitle = "CMS-5000 | ㈜오토시스";
     private bool _saveUsername;
     private bool _savePassword;
@@ -64,6 +67,8 @@ public class MainViewModel : ViewModelBase
     public string LoginError           { get => _loginError;         set => SetProperty(ref _loginError, value); }
     public bool IsLoginBusy            { get => _isLoginBusy;        set => SetProperty(ref _isLoginBusy, value); }
     public string UpdateStatus         { get => _updateStatus;       set => SetProperty(ref _updateStatus, value); }
+    public bool IsDbConnected          { get => _isDbConnected;      set => SetProperty(ref _isDbConnected, value); }
+    public string ConnectionStatusText { get => _connectionStatusText; set => SetProperty(ref _connectionStatusText, value); }
     public string WindowTitle          { get => _windowTitle;        set => SetProperty(ref _windowTitle, value); }
     public bool SaveUsername           { get => _saveUsername;       set => SetProperty(ref _saveUsername, value); }
     public bool SavePassword           { get => _savePassword;       set => SetProperty(ref _savePassword, value); }
@@ -75,12 +80,13 @@ public class MainViewModel : ViewModelBase
     public int AlertCount              => 3;
     public int NotificationCount       => 2;
 
-    public OperatorViewModel    OperatorVM    { get; } = new();
-    public MaintenanceViewModel MaintenanceVM { get; } = new();
-    public ExpertViewModel      ExpertVM      { get; } = new();
-    public AdminViewModel       AdminVM       { get; } = new();
-    public SettingsViewModel    SettingsVM    { get; } = new();
-    public LogViewModel         LogVM         { get; } = new();
+    public OperatorViewModel      OperatorVM      { get; } = new();
+    public MaintenanceViewModel   MaintenanceVM   { get; } = new();
+    public ExpertViewModel        ExpertVM        { get; } = new();
+    public AdminViewModel         AdminVM         { get; } = new();
+    public DeviceConfigViewModel  DeviceConfigVM  { get; } = new();
+    public SettingsViewModel      SettingsVM      { get; } = new();
+    public LogViewModel           LogVM           { get; } = new();
 
     public ObservableCollection<NavNode>  NavTree        { get; } = [];
     public ObservableCollection<string>  LoginUsernames { get; } = [];
@@ -91,8 +97,11 @@ public class MainViewModel : ViewModelBase
     public RelayCommand ToggleTreeCommand                   { get; }
     public RelayCommand<string> ShowAlarmDetailCommand      { get; }
     public RelayCommand TogglePasswordVisibilityCommand     { get; }
+    public RelayCommand DbConnectCommand                    { get; }
+    public RelayCommand DbDisconnectCommand                 { get; }
 
     private readonly System.Timers.Timer _clockTimer;
+    private readonly System.Timers.Timer _dbCheckTimer;
 
     public MainViewModel()
     {
@@ -104,6 +113,8 @@ public class MainViewModel : ViewModelBase
             ActiveNavIcon = icon;
             if (icon == "Admin")
                 CurrentView = AdminVM;
+            else if (icon == "DeviceConfig")
+                CurrentView = DeviceConfigVM;
             else if (icon == "Settings")
                 CurrentView = SettingsVM;
             else if (icon == "Log")
@@ -115,6 +126,33 @@ public class MainViewModel : ViewModelBase
         });
         ToggleTreeCommand = new RelayCommand(_ => IsTreePanelVisible = !IsTreePanelVisible);
         TogglePasswordVisibilityCommand = new RelayCommand(_ => IsPasswordVisible = !IsPasswordVisible);
+
+        // Connection 메뉴: DB 연결/해제 (원본 Database Connect/Disconnect — 실제 동작 + LED 반영)
+        DbConnectCommand = new RelayCommand(_ =>
+        {
+            // 원본 ConnectDatabaseChecker: 접속정보 다이얼로그 → 성공 시 저장·접속
+            var dlg = new Views.Admin.DbConnectView { Owner = System.Windows.Application.Current.MainWindow };
+            dlg.ShowDialog();
+            if (dlg.Connected)
+            {
+                _ = CheckDbConnectionAsync();   // 즉시 LED 갱신
+                AppLogService.Info("연결", $"DB 연결(수동): {PostgresService.CurrentDatabase}");
+            }
+        });
+        DbDisconnectCommand = new RelayCommand(_ =>
+        {
+            if (System.Windows.MessageBox.Show(
+                    "DB 연결을 해제하시겠습니까?\n해제 시 데이터 조회·저장이 중단되고 하단 LED 가 회색으로 표시됩니다.",
+                    "Database Disconnect",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Question,
+                    System.Windows.MessageBoxResult.No) != System.Windows.MessageBoxResult.Yes)
+                return;
+
+            PostgresService.Disconnect();
+            _ = CheckDbConnectionAsync();   // 즉시 LED 회색
+            AppLogService.Info("연결", "DB 연결 해제(수동)");
+        });
         ShowAlarmDetailCommand = new RelayCommand<string>(status =>
         {
             if (IsLoginVisible || status == null) return;
@@ -130,10 +168,34 @@ public class MainViewModel : ViewModelBase
         _clockTimer.Elapsed += (_, _) => CurrentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         _clockTimer.Start();
 
+        // DB 연결 상태 주기 점검 (하단 상태바 LED)
+        _dbCheckTimer = new System.Timers.Timer(5000);
+        _dbCheckTimer.Elapsed += (_, _) => _ = CheckDbConnectionAsync();
+        _dbCheckTimer.Start();
+        _ = CheckDbConnectionAsync();   // 시작 즉시 1회
+
         BuildNavTree();
         LoadSavedCredentials();
         _ = CheckForUpdatesAsync();
         LoadLoginUsernames();
+    }
+
+    /// <summary>DB 도달 여부를 점검해 하단 상태바 LED·텍스트를 갱신한다.</summary>
+    private async Task CheckDbConnectionAsync()
+    {
+        try
+        {
+            await PostgresService.EnsureReachableAsync();
+            IsDbConnected = true;
+            ConnectionStatusText = "CMS-5000 Connection OK.";
+        }
+        catch
+        {
+            IsDbConnected = false;
+            ConnectionStatusText = PostgresService.IsManuallyDisconnected
+                ? "CMS-5000 Disconnected."
+                : "CMS-5000 Connection FAIL.";
+        }
     }
 
     public void SelectNavNode(NavNode node)
@@ -158,9 +220,10 @@ public class MainViewModel : ViewModelBase
         "Diagnosis"  => "진단",
         "Inspection" => "점검/이력",
         "Report"     => "보고서",
-        "Log"        => "로그",
-        "Settings"   => "설정",
-        "Admin"      => "사용자 관리",
+        "Log"          => "로그",
+        "Settings"     => "설정",
+        "Admin"        => "사용자 관리",
+        "DeviceConfig" => "장비 구성",
         _            => icon
     };
 
@@ -168,7 +231,19 @@ public class MainViewModel : ViewModelBase
     {
         IsLoginBusy = true;
         LoginError = "";
-        var (success, error) = await AuthService.LoginAsync(LoginUsername, LoginPassword);
+        bool success;
+        string error;
+        try
+        {
+            (success, error) = await AuthService.LoginAsync(LoginUsername, LoginPassword);
+        }
+        catch (Exception ex)
+        {
+            IsLoginBusy = false;
+            LoginError = $"DB 오류: {ex.Message}";
+            AppLogService.Error("인증", $"로그인 예외: {ex.Message}");
+            return;
+        }
         IsLoginBusy = false;
 
         if (!success)

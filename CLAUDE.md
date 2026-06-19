@@ -7,7 +7,7 @@
 - **WPF / .NET 9** (`net9.0-windows10.0.19041.0`), MVVM
 - **ScottPlot.WPF** (진동 차트)
 - **Velopack** (자동 업데이트 + 설치 패키지)
-- **Supabase** (인증 · 데이터, `supabase-csharp`)
+- **PostgreSQL** (인증 · 데이터). `Npgsql`로 로컬 DB에 **직접 연결** — 접속 정보는 `appsettings.json`의 `PostgreSQL` 섹션. (※ Supabase 호스팅/`supabase-csharp`는 더 이상 사용하지 않으며, `supabase/` 폴더는 레거시 마이그레이션 잔재)
 - 언어: 한국어 (UI · 커밋 메시지 · 주석 모두 한국어)
 
 ## 빌드 / 실행
@@ -27,10 +27,10 @@ dotnet run                 # 실행 (로그인 → 메뉴)
 → **main push = 배포**이므로 커밋 전 사용자 확인 필수. 가벼운 실험은 별도 브랜치에서.
 
 ## 아키텍처
-- `Program.cs` — 진입점. Velopack 초기화 → Supabase 연결 → `App` 실행.
+- `Program.cs` — 진입점. Velopack 초기화 → PostgreSQL 연결(`PostgresService.Initialize`/`EnsureReachableAsync`) → 확장 스키마 멱등 보장(`EnsureSchemaAsync`) → `App` 실행.
 - `MainWindow.xaml` — 좌측 NavRail(대시보드/설비/분석/진단/점검·이력/보고서/설정)과 상단 바. 메뉴는 사용자 **역할(Operator/Maintenance/Expert/Admin)** 에 따라 표시/숨김.
 - `Views/` — 역할별 메인 뷰 + Settings/Shell(Login)/Admin. `ViewModels/`와 1:1, `ViewModelBase`(INotifyPropertyChanged) + `RelayCommand`.
-- `Services/` — `UpdateService`(Velopack+GitHub), `SupabaseService`, `AuthService`, `ChangelogService` 등.
+- `Services/` — `PostgresService`(Npgsql 데이터소스·연결·스키마), `AuthService`(로그인·잠금), `UserService`/`LoginLogService`(`cms_users`/`cms_login_logs`), `UpdateService`(Velopack+GitHub), `ChangelogService`, `AppLogService`(앱 동작 로그) 등.
 - `Themes/` — `Colors.xaml`, `Styles.xaml`. 색/스타일은 항상 리소스 키 사용(`AccentBlueBrush`, `StatusGoodBrush`, `CardStyle`, `AccentButtonStyle` 등). 하드코딩 금지.
 
 ## 핵심 주의사항

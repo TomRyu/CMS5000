@@ -21,7 +21,6 @@ class Program
         _instanceMutex = new Mutex(true, MutexName, out bool createdNew);
         if (!createdNew)
         {
-            // 이미 실행 중 → 기존 창을 깨우고 종료
             if (EventWaitHandle.TryOpenExisting(ActivateName, out var existing))
                 existing.Set();
             return;
@@ -29,7 +28,7 @@ class Program
 
         AppLogService.Info("시스템", $"CMS-5000 시작 (v{UpdateService.GetCurrentVersionText()})");
 
-        if (!ConnectApiWithRetry())
+        if (!ConnectDbWithRetry())
             return;
 
         var app = new App();
@@ -40,10 +39,10 @@ class Program
         GC.KeepAlive(_instanceMutex);
     }
 
-    /// <summary>API(Edge Functions) 초기화 + 헬스체크. 실패 시 재시도/종료를 사용자에게 묻는다.</summary>
-    private static bool ConnectApiWithRetry()
+    /// <summary>PostgreSQL 초기화 + 연결 체크. 실패 시 재시도/종료를 사용자에게 묻는다.</summary>
+    private static bool ConnectDbWithRetry()
     {
-        try { ApiService.Initialize(); }
+        try { PostgresService.Initialize(); }
         catch (Exception ex)
         {
             MessageBox.Show($"설정 로드 실패:\n\n{ex.Message}\n\nappsettings.json을 확인하세요.",
@@ -55,15 +54,26 @@ class Program
         {
             try
             {
-                Task.Run(async () => await ApiService.EnsureReachableAsync()).GetAwaiter().GetResult();
-                AppLogService.Success("시스템", "서버 연결 완료");
+                Task.Run(async () => await PostgresService.EnsureReachableAsync()).GetAwaiter().GetResult();
+                AppLogService.Success("시스템", "데이터베이스 연결 완료");
+
+                // 확장 스키마(Rack/Module/Channel Config) 멱등 보장
+                try
+                {
+                    Task.Run(async () => await PostgresService.EnsureSchemaAsync()).GetAwaiter().GetResult();
+                    AppLogService.Success("시스템", "스키마 확인 완료");
+                }
+                catch (Exception sx)
+                {
+                    AppLogService.Error("시스템", $"스키마 확인 실패(권한 등): {sx.Message}");
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                AppLogService.Error("시스템", $"서버 연결 실패: {ex.Message}");
+                AppLogService.Error("시스템", $"데이터베이스 연결 실패: {ex.Message}");
                 var result = MessageBox.Show(
-                    $"서버 연결에 실패했습니다.\n\n{ex.Message}\n\n네트워크 상태를 확인 후 다시 시도하시겠습니까?\n" +
+                    $"데이터베이스 연결에 실패했습니다.\n\n{ex.Message}\n\n네트워크 상태를 확인 후 다시 시도하시겠습니까?\n" +
                     "([예] 재연결 / [아니요] 종료)",
                     "CMS-5000 연결 오류",
                     MessageBoxButton.YesNo,

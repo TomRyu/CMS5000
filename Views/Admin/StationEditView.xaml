@@ -1,0 +1,163 @@
+<Window x:Class="CMS5000.Views.Admin.StationEditView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding DialogTitle}"
+        Width="520" Height="340"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#1E2433">
+
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        <Style x:Key="InputBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="#3D4A6A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Background" Value="#2D3448"/>
+        </Style>
+        <Style x:Key="InputBox" TargetType="TextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="CaretBrush" Value="#E2E8F0"/>
+        </Style>
+        <Style x:Key="BlueBtn" TargetType="Button">
+            <Setter Property="Padding" Value="24,9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#2563EB" CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#155FAD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="GrayBtn" TargetType="Button">
+            <Setter Property="Padding" Value="24,9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#2D3448" CornerRadius="5"
+                                BorderBrush="#E53E3E" BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#3D1515"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- STATION ID -->
+            <RowDefinition Height="14"/>
+            <RowDefinition Height="Auto"/>  <!-- Name / Company -->
+            <RowDefinition Height="14"/>
+            <RowDefinition Height="Auto"/>  <!-- CompanyAddr / Port -->
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>  <!-- 버튼 -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ STATION ID ══════════════════════════════════════ -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="STATION ID" Style="{StaticResource FieldLabel}"/>
+            <Border Style="{StaticResource InputBorder}">
+                <TextBox Text="{Binding StationId, UpdateSourceTrigger=PropertyChanged}"
+                         IsReadOnly="{Binding IsIdReadOnly}">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource InputBox}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsIdReadOnly}" Value="True">
+                                    <Setter Property="Opacity" Value="0.55"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </Border>
+        </StackPanel>
+
+        <!-- ══ Name / Company ══════════════════════════════════ -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Name" Style="{StaticResource FieldLabel}"/>
+                <Border Style="{StaticResource InputBorder}">
+                    <TextBox Text="{Binding StationName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource InputBox}"/>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Company" Style="{StaticResource FieldLabel}"/>
+                <Border Style="{StaticResource InputBorder}">
+                    <TextBox Text="{Binding Company, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource InputBox}"/>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- ══ CompanyAddr / RACK Port ═════════════════════════ -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="120"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Company Address" Style="{StaticResource FieldLabel}"/>
+                <Border Style="{StaticResource InputBorder}">
+                    <TextBox Text="{Binding CompanyAddr, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource InputBox}"/>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="RACK Listen Port" Style="{StaticResource FieldLabel}"/>
+                <Border Style="{StaticResource InputBorder}">
+                    <TextBox Text="{Binding RackPort, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource InputBox}"/>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- ══ 버튼 ════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Command="{Binding SaveCommand}" Style="{StaticResource BlueBtn}" Margin="0,0,10,0">
+                <TextBlock Text="SAVE" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+            </Button>
+            <Button Command="{Binding CancelCommand}" Style="{StaticResource GrayBtn}">
+                <TextBlock Text="CANCEL" FontSize="12" FontWeight="SemiBold" Foreground="#E53E3E"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

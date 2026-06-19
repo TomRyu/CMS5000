@@ -1,6 +1,22 @@
 {
   "entries": [
     {
+      "version": "1.0.48",
+      "date": "2026-06-18",
+      "changes": [
+        { "kind": "New", "text": "메인 화면 하단에 데이터베이스 연결 상태바를 추가했습니다. 연결되면 녹색 LED가 깜빡이며 'CMS-5000 Connection OK.'를, 끊기면 회색 LED를 표시하고 5초마다 자동 점검합니다." },
+        { "kind": "Improve", "text": "랙 열기(Open) 화면을 실제 제품 랙 형태로 개선했습니다. 키 큰 슬롯 본체와 상단 번호 헤더·하단 레일을 갖추고, 모듈 장착 여부를 슬롯 중앙 색상 블록(장착 녹색·비활성 회색)으로 표시합니다." },
+        { "kind": "Improve", "text": "랙 'Modify' 다이얼로그를 원본과 동일하게 재현했습니다. 3개 탭(INFO / Modbus / Server Connect.), 숫자 스피너·COM 포트 콤보 등 컨트롤을 그대로 갖추고, TCP/시리얼/서버/Modbus/Waveform/Trend 값을 DB에서 모두 로드·저장합니다." },
+        { "kind": "Improve", "text": "Module Config 화면을 원본과 동일하게 개편했습니다. 밝은 테마·헤더(STATION/RACK/ID·NAME·TYPE·Activity·Config 시각)와 고정 4채널(Activity / Reference ON·OFF·대상 / Config)을 갖추고 값을 로드·저장합니다." },
+        { "kind": "New", "text": "Reference Config(채널 신호설정) 화면을 신규 구현했습니다. 원본과 동일한 4개 탭(INFO. / Sensor & Auto Upload / Auto Upload / Min·Max·Delta)의 모든 컨트롤을 갖추며, 모듈 화면의 채널 Config 버튼으로 열립니다." },
+        { "kind": "Improve", "text": "Reference Config(채널 신호설정) 화면을 원본 frmReference와 동일하게 마감했습니다. 원본 좌표 1:1 배치, reference/autoupload/sensor 테이블에서 실제 값 로드·저장, 라디오/콤보 매핑·활성조건·소수 표시·읽기전용 항목까지 반영." },
+        { "kind": "New", "text": "RACK 컨텍스트메뉴 Modify를 3탭 폼 탭으로 여는 방식으로 변경했습니다." },
+        { "kind": "New", "text": "RACK COPY 다이얼로그(원본 frmCopy)를 추가했습니다 — 원본/대상 스테이션·랙 선택 후 rack·모듈·채널 복사." },
+        { "kind": "New", "text": "모듈 메뉴에 REFERENCE/IO Insert · RELAY Insert 두 삽입 다이얼로그를 원본(frmModule/frmRelayModule)대로 추가했습니다." },
+        { "kind": "Improve", "text": "표기를 'CMS-5000'으로 통일했습니다." }
+      ]
+    },
+    {
       "version": "1.0.47",
       "date": "2026-05-30",
       "changes": [

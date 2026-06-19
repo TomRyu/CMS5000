@@ -1,0 +1,176 @@
+<Window x:Class="CMS5000.Views.Admin.TrainInsertView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding DialogTitle}"
+        Width="420" Height="340"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#1E2433">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="Lbl" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        <Style x:Key="InBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="#3D4A6A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Background" Value="#2D3448"/>
+        </Style>
+        <Style x:Key="In" TargetType="TextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="CaretBrush" Value="#E2E8F0"/>
+        </Style>
+        <Style x:Key="InRO" TargetType="TextBox" BasedOn="{StaticResource In}">
+            <Setter Property="Opacity" Value="0.55"/>
+        </Style>
+        <Style x:Key="BluBtn" TargetType="Button">
+            <Setter Property="Padding" Value="24,9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#2563EB" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#155FAD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="RedBtn" TargetType="Button">
+            <Setter Property="Padding" Value="24,9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#2D3448" CornerRadius="5" BorderBrush="#E53E3E" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="#3D1515"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Station ID (readonly) -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>  <!-- Train ID (조건부 readonly) -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>  <!-- Component ID (조건부) -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>  <!-- Point ID (조건부) -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>  <!-- Name -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>  <!-- Channel (조건부) + Activity -->
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>  <!-- 버튼 -->
+        </Grid.RowDefinitions>
+
+        <!-- STATION ID (항상 표시, readonly) -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="STATION ID" Style="{StaticResource Lbl}"/>
+            <Border Style="{StaticResource InBorder}">
+                <TextBox Text="{Binding StationId}" IsReadOnly="True" Style="{StaticResource InRO}"/>
+            </Border>
+        </StackPanel>
+
+        <!-- TRAIN ID -->
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="TRAIN ID" Style="{StaticResource Lbl}"/>
+            <Border Style="{StaticResource InBorder}">
+                <!-- Train 모드: 편집 가능 / Component·Point 모드: readonly -->
+                <Grid>
+                    <TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource In}"
+                             Visibility="{Binding ShowTrainIdReadonly, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
+                    <!-- ShowTrainIdReadonly=True(Component/Point): readonly 표시 -->
+                    <TextBox Text="{Binding ReadonlyTrainId}" IsReadOnly="True" Style="{StaticResource InRO}"
+                             Visibility="{Binding ShowTrainIdReadonly, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- COMPONENT ID (Component/Point 모드에서만 표시) -->
+        <StackPanel Grid.Row="4" Visibility="{Binding ShowComponentIdRow, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="COMPONENT ID" Style="{StaticResource Lbl}"/>
+            <Border Style="{StaticResource InBorder}">
+                <!-- Component 모드: 편집 가능 / Point 모드: readonly -->
+                <Grid>
+                    <TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource In}"
+                             IsEnabled="{Binding IsComponentIdEditable}"/>
+                    <TextBox Text="{Binding ReadonlyComponentId}" IsReadOnly="True" Style="{StaticResource InRO}"
+                             Visibility="{Binding IsComponentIdEditable, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- POINT ID (Point 모드에서만 표시) -->
+        <StackPanel Grid.Row="6" Visibility="{Binding ShowPointIdRow, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="POINT ID" Style="{StaticResource Lbl}"/>
+            <Border Style="{StaticResource InBorder}">
+                <TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource In}"/>
+            </Border>
+        </StackPanel>
+
+        <!-- Name -->
+        <StackPanel Grid.Row="8">
+            <TextBlock Text="Name" Style="{StaticResource Lbl}"/>
+            <Border Style="{StaticResource InBorder}">
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource In}"/>
+            </Border>
+        </StackPanel>
+
+        <!-- Channel (Point 모드) + Activity -->
+        <Grid Grid.Row="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Visibility="{Binding ShowChannelRow, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Channel" Style="{StaticResource Lbl}"/>
+                <ComboBox ItemsSource="{Binding Channels}"
+                          SelectedItem="{Binding SelectedChannel}"
+                          DisplayMemberPath="DisplayName"
+                          Background="#2D3448" Foreground="#E2E8F0"
+                          BorderBrush="#3D4A6A" Height="30"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" IsChecked="{Binding Activity}" Content="Activity"
+                      Foreground="#E2E8F0" FontSize="12" VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- 버튼 -->
+        <StackPanel Grid.Row="12" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Command="{Binding SaveCommand}" Style="{StaticResource BluBtn}" Margin="0,0,10,0">
+                <TextBlock Text="INSERT" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+            </Button>
+            <Button Command="{Binding CancelCommand}" Style="{StaticResource RedBtn}">
+                <TextBlock Text="CANCEL" FontSize="12" FontWeight="SemiBold" Foreground="#E53E3E"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

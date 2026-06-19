@@ -11,6 +11,7 @@
         xmlns:exVm="clr-namespace:CMS5000.ViewModels.Expert"
         xmlns:adVm="clr-namespace:CMS5000.ViewModels"
         xmlns:adView="clr-namespace:CMS5000.Views.Admin"
+        xmlns:dcVm="clr-namespace:CMS5000.ViewModels.Admin"
         xmlns:stVm="clr-namespace:CMS5000.ViewModels.Settings"
         xmlns:stView="clr-namespace:CMS5000.Views.Settings"
         xmlns:logView="clr-namespace:CMS5000.Views.Log"
@@ -35,6 +36,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type adVm:AdminViewModel}">
             <adView:AdminView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dcVm:DeviceConfigViewModel}">
+            <adView:DeviceConfigView DataContext="{Binding}"/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type stVm:SettingsViewModel}">
             <stView:SettingsView DataContext="{Binding}"/>
@@ -82,6 +86,11 @@
                 </Style>
             </Grid.Style>
 
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>      <!-- Row 0: 콘텐츠 (아이콘/트리/메인) -->
+                <RowDefinition Height="Auto"/>   <!-- Row 1: DB 연결 상태바 -->
+            </Grid.RowDefinitions>
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="72"/>   <!-- Col 0: Icon strip -->
                 <ColumnDefinition>               <!-- Col 1: Tree panel (collapsible) -->
@@ -125,9 +134,8 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
 
-                    <!-- 하단 고정 영역 -->
-                    <StackPanel DockPanel.Dock="Bottom">
-                        <Rectangle Height="1" Fill="#22FFFFFF" Margin="10,6"/>
+                    <!-- 상단: 관리자/장비구성 (Admin 로그인 시 상단 배치) -->
+                    <StackPanel DockPanel.Dock="Top" Margin="0,4,0,0">
 
                         <!-- 관리자 (Admin 역할일 때만 표시) -->
                         <Button Width="72" Height="66" Cursor="Hand"
@@ -170,6 +178,54 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
+
+                        <!-- 장비구성 (Admin 역할일 때만 표시) -->
+                        <Button Width="72" Height="66" Cursor="Hand"
+                                Command="{Binding SwitchNavCommand}" CommandParameter="DeviceConfig"
+                                ToolTip="장비 구성">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAdminRole}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" Background="Transparent">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ico" Text="&#xE950;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                       Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="lbl" Text="장비구성" FontSize="10"
+                                                       Foreground="#66FFFFFF" HorizontalAlignment="Center"
+                                                       Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveNavIcon}" Value="DeviceConfig">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Background" Value="{StaticResource NavIconHoverBrush}"/>
+                                            <Setter TargetName="ico" Property="Foreground" Value="#DDFFFFFF"/>
+                                            <Setter TargetName="lbl" Property="Foreground" Value="#BBFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                    </StackPanel>
+
+                    <!-- 하단 고정 영역 -->
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <Rectangle Height="1" Fill="#22FFFFFF" Margin="10,6"/>
 
                         <!-- 설정 -->
                         <Button Width="72" Height="66" Cursor="Hand"
@@ -627,7 +683,7 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="⬡" FontSize="18" Foreground="{StaticResource AccentBlueBrush}"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="CMS" FontSize="17" FontWeight="Bold"
+                            <TextBlock Text="CMS-" FontSize="17" FontWeight="Bold"
                                        Foreground="{StaticResource AccentBlueBrush}"/>
                             <TextBlock Text="5000" FontSize="17" FontWeight="Bold"
                                        Foreground="{StaticResource TextPrimaryBrush}"/>
@@ -760,6 +816,47 @@
                     <ContentPresenter Grid.Row="1" Content="{Binding CurrentView}"/>
                 </Grid>
             </Grid>
+
+            <!-- ====================================================
+                 ROW 1 : DB 연결 상태바 (CMS-3000 호환 LED + 텍스트)
+                 ==================================================== -->
+            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                    Background="{StaticResource HeaderBgBrush}"
+                    BorderBrush="{StaticResource HeaderBorderBrush}" BorderThickness="0,1,0,0"
+                    Height="24" Panel.ZIndex="20">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                    <!-- 연결 LED : 연결 시 녹색 깜빡임, 끊기면 회색 고정 -->
+                    <Ellipse Width="9" Height="9" VerticalAlignment="Center"
+                             ToolTip="{Binding ConnectionStatusText}">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource StatusOfflineBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDbConnected}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}"/>
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard x:Name="LedBlink">
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                     From="1" To="0.2" Duration="0:0:0.6"
+                                                                     AutoReverse="True"
+                                                                     RepeatBehavior="Forever"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="LedBlink"/>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="7,0,0,0"/>
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </Window>

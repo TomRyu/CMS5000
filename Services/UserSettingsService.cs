@@ -11,7 +11,7 @@ public static class UserSettingsService
         try
         {
             user.FontSize = preset.ToString();
-            await ApiService.PostOkAsync("/set-font-size", new { fontSize = preset.ToString() });
+            await UserService.SetFontSizeAsync(user.Id, preset.ToString());
         }
         catch { }
     }

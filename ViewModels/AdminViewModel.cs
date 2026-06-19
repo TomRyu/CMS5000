@@ -70,7 +70,6 @@ public class AdminViewModel : ViewModelBase
         ToggleActiveCommand = new RelayCommand<CmsUser>(u => { if (u != null) _ = ToggleActiveAsync(u); });
     }
 
-    /// <summary>로그인(관리자) 후 호출해 목록·이력을 적재.</summary>
     public void LoadAll()
     {
         _ = LoadUsersAsync();
@@ -83,10 +82,10 @@ public class AdminViewModel : ViewModelBase
         StatusMessage = "";
         try
         {
-            var (data, error) = await ApiService.GetAsync<List<CmsUser>>("/users");
-            if (error != null) { StatusMessage = $"목록 로드 실패: {error}"; return; }
-            Users = new ObservableCollection<CmsUser>(data ?? []);
+            var data = await UserService.GetAllAsync();
+            Users = new ObservableCollection<CmsUser>(data);
         }
+        catch (Exception ex) { StatusMessage = $"목록 로드 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 
@@ -95,10 +94,10 @@ public class AdminViewModel : ViewModelBase
         IsLogsBusy = true;
         try
         {
-            var (data, error) = await ApiService.GetAsync<List<LoginLog>>("/login-logs?limit=200");
-            if (error != null) { StatusMessage = $"이력 로드 실패: {error}"; return; }
-            LoginLogs = new ObservableCollection<LoginLog>(data ?? []);
+            var data = await LoginLogService.GetRecentAsync(200);
+            LoginLogs = new ObservableCollection<LoginLog>(data);
         }
+        catch (Exception ex) { StatusMessage = $"이력 로드 실패: {ex.Message}"; }
         finally { IsLogsBusy = false; }
     }
 
@@ -158,41 +157,30 @@ public class AdminViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            string? error;
             if (IsAddingNew)
             {
                 if (string.IsNullOrWhiteSpace(NewPassword)) { StatusMessage = "비밀번호를 입력하세요."; return; }
-                (_, error) = await ApiService.PostAsync<CmsUser>("/users", new
-                {
-                    username    = EditUsername.Trim(),
-                    displayName = EditDisplayName.Trim(),
-                    role        = EditRole,
-                    password    = NewPassword
-                });
-                if (error != null) { StatusMessage = $"저장 실패: {error}"; return; }
+                await UserService.CreateAsync(
+                    EditUsername.Trim(), EditDisplayName.Trim(), EditRole, NewPassword);
                 StatusMessage = $"'{EditUsername}' 사용자가 추가되었습니다.";
             }
             else if (_selectedUser != null)
             {
-                (_, error) = await ApiService.PostAsync<CmsUser>("/users", new
-                {
-                    id          = _selectedUser.Id,
-                    displayName = EditDisplayName.Trim(),
-                    role        = EditRole,
-                    password    = string.IsNullOrWhiteSpace(NewPassword) ? null : NewPassword
-                });
-                if (error != null) { StatusMessage = $"저장 실패: {error}"; return; }
+                await UserService.UpdateAsync(
+                    _selectedUser.Id, EditDisplayName.Trim(), EditRole,
+                    string.IsNullOrWhiteSpace(NewPassword) ? null : NewPassword);
                 StatusMessage = $"'{EditUsername}' 사용자가 수정되었습니다.";
             }
             IsEditing = false;
             await LoadUsersAsync();
         }
+        catch (Exception ex) { StatusMessage = $"저장 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 
     private void CancelEdit()
     {
-        IsEditing = false;
+        IsEditing     = false;
         _selectedUser = null;
         StatusMessage = "";
     }
@@ -211,19 +199,18 @@ public class AdminViewModel : ViewModelBase
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Warning,
             System.Windows.MessageBoxResult.No);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
-            return;
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
         IsBusy = true;
         try
         {
-            var (ok, error) = await ApiService.PostOkAsync("/users/delete", new { id = user.Id });
-            if (!ok) { StatusMessage = $"삭제 실패: {error}"; return; }
+            await UserService.DeleteAsync(user.Id);
             StatusMessage = $"'{user.Username}' 사용자가 삭제되었습니다.";
             AppLogService.Warning("관리", $"사용자 삭제: {user.DisplayName}({user.Username})");
             if (IsEditing && _selectedUser?.Id == user.Id) CancelEdit();
             await LoadUsersAsync();
         }
+        catch (Exception ex) { StatusMessage = $"삭제 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 
@@ -232,12 +219,11 @@ public class AdminViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var (_, error) = await ApiService.PostAsync<CmsUser>("/users",
-                new { id = user.Id, isActive = !user.IsActive });
-            if (error != null) { StatusMessage = $"상태 변경 실패: {error}"; return; }
+            await UserService.SetActiveAsync(user.Id, !user.IsActive);
             StatusMessage = $"'{user.Username}' 계정 {(!user.IsActive ? "활성화" : "비활성화")} 완료";
             await LoadUsersAsync();
         }
+        catch (Exception ex) { StatusMessage = $"상태 변경 실패: {ex.Message}"; }
         finally { IsBusy = false; }
     }
 }

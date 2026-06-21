@@ -798,22 +798,8 @@
 
                 <!-- CONTENT AREA -->
                 <Grid Grid.Row="1" Background="{StaticResource ContentBgBrush}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>  <!-- Breadcrumb -->
-                        <RowDefinition Height="*"/>     <!-- Main View -->
-                    </Grid.RowDefinitions>
-
-                    <!-- Breadcrumb -->
-                    <Border Grid.Row="0" Background="{StaticResource HeaderBgBrush}"
-                            BorderBrush="{StaticResource HeaderBorderBrush}" BorderThickness="0,0,0,1"
-                            Padding="16,7">
-                        <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}">
-                            <Run Text="{Binding Breadcrumb}"/>
-                        </TextBlock>
-                    </Border>
-
                     <!-- Role View -->
-                    <ContentPresenter Grid.Row="1" Content="{Binding CurrentView}"/>
+                    <ContentPresenter Content="{Binding CurrentView}"/>
                 </Grid>
             </Grid>
 

@@ -146,11 +146,23 @@
         <!-- ══ Row 1: 헤더 ════════════════════════════════════════ -->
         <Grid Grid.Row="1" Margin="20,12,20,0">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
+            <!-- 좌측 패널 접기/펼치기 토글 -->
+            <Button x:Name="LeftToggleButton" Grid.Column="0" Click="ToggleLeftPanel_Click"
+                    Style="{StaticResource FlatButtonStyle}"
+                    Padding="8,6" Margin="0,0,10,0" VerticalAlignment="Center"
+                    Background="{StaticResource CardBgBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
+                    ToolTip="STATION/RACK/TRAIN 패널 접기/펼치기">
+                <TextBlock x:Name="LeftToggleIcon" Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+            </Button>
+
+            <StackPanel Grid.Column="1">
                 <TextBlock Text="장비 구성" FontSize="20" FontWeight="Bold"
                            Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="설비 RACK 구조 및 TRAIN 계층을 조회하고 관리합니다."
@@ -158,7 +170,7 @@
             </StackPanel>
 
             <!-- 새로 고침 -->
-            <Button Grid.Column="1" Command="{Binding RefreshCommand}"
+            <Button Grid.Column="2" Command="{Binding RefreshCommand}"
                     Style="{StaticResource FlatButtonStyle}"
                     Padding="10,6" VerticalAlignment="Center"
                     Background="{StaticResource CardBgBrush}"
@@ -175,13 +187,18 @@
         <!-- ══ Row 2: 메인 콘텐츠 ════════════════════════════════════ -->
         <Grid Grid.Row="2" Margin="20,12,20,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280"/>   <!-- 좌: 트리 패널 -->
-                <ColumnDefinition Width="8"/>     <!-- 간격 -->
+                <ColumnDefinition x:Name="LeftPanelColumn" Width="280" MinWidth="220" MaxWidth="640"/>   <!-- 좌: 트리 패널 -->
+                <ColumnDefinition Width="8"/>     <!-- 간격 / 폭 조절 스플리터 -->
                 <ColumnDefinition Width="*"/>     <!-- 우: 상세 패널 -->
             </Grid.ColumnDefinitions>
 
+            <!-- 좌측 패널 폭 조절(드래그). 마지막 폭은 LocalSettings 에 저장 -->
+            <GridSplitter x:Name="LeftPanelSplitter" Grid.Column="1" Width="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                          Cursor="SizeWE" DragCompleted="LeftPanelSplitter_DragCompleted"/>
+
             <!-- ─── 좌측 패널: STATION 리스트 + RACK 트리(2*) + TRAIN 트리(1*) ──────── -->
-            <Grid Grid.Column="0">
+            <Grid x:Name="LeftPanelGrid" Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="110"/>  <!-- STATION 리스트 -->
                     <RowDefinition Height="8"/>    <!-- 간격 -->

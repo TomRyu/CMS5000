@@ -6,7 +6,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
         <Style x:Key="Hdr" TargetType="TextBlock">
-            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="FontSize"   Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#475569"/>
             <Setter Property="Margin"     Value="2,0,0,4"/>
@@ -23,9 +23,9 @@
             <Setter Property="RowBackground"            Value="#FFFFFF"/>
             <Setter Property="AlternatingRowBackground" Value="#F7F9FC"/>
             <Setter Property="SelectionMode"            Value="Single"/>
-            <Setter Property="FontSize"                 Value="11"/>
-            <Setter Property="ColumnHeaderHeight"       Value="24"/>
-            <Setter Property="RowHeight"                Value="20"/>
+            <Setter Property="FontSize"                 Value="12"/>
+            <Setter Property="ColumnHeaderHeight"       Value="28"/>
+            <Setter Property="RowHeight"                Value="26"/>
             <Setter Property="AutoGenerateColumns"      Value="False"/>
             <Setter Property="CanUserAddRows"           Value="False"/>
             <Setter Property="CanUserResizeRows"        Value="False"/>
@@ -33,14 +33,35 @@
             <Setter Property="HeadersVisibility"        Value="Column"/>
         </Style>
 
-        <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background"      Value="#EEF2F8"/>
-            <Setter Property="Foreground"      Value="#475569"/>
-            <Setter Property="FontWeight"      Value="SemiBold"/>
-            <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="Padding"         Value="6,2"/>
-            <Setter Property="BorderBrush"     Value="#C7CED9"/>
-            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Style x:Key="PhysHdr" TargetType="DataGridColumnHeader">
+            <Setter Property="Background"           Value="#EEF2F8"/>
+            <Setter Property="Foreground"           Value="#475569"/>
+            <Setter Property="FontWeight"           Value="Normal"/>
+            <Setter Property="FontSize"             Value="10"/>
+            <Setter Property="Padding"              Value="6,4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush"          Value="#C7CED9"/>
+            <Setter Property="BorderThickness"      Value="0,0,1,1"/>
+        </Style>
+
+        <!-- 셀: 수직 가운데 정렬 + 여백으로 글자 잘림 방지. 헤더와 동일하게 폰트 12 명시 -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="FontSize"                 Value="12"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding"                  Value="6,2"/>
+            <Setter Property="BorderThickness"          Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="Btn" TargetType="Button">
@@ -63,6 +84,25 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Logical(논리) 구조 그리드: 녹색 계열로 구분 -->
+        <Style x:Key="DGLogical" TargetType="DataGrid" BasedOn="{StaticResource DG}">
+            <Setter Property="RowBackground"            Value="#EAF7EE"/>
+            <Setter Property="AlternatingRowBackground" Value="#D8EFDF"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#CDE8D5"/>
+            <Setter Property="VerticalGridLinesBrush"   Value="#CDE8D5"/>
+        </Style>
+        <Style x:Key="LogHdr" TargetType="DataGridColumnHeader" BasedOn="{StaticResource PhysHdr}">
+            <Setter Property="Background" Value="#DCEFE2"/>
+            <Setter Property="Foreground" Value="#1E7D34"/>
+        </Style>
+
+        <!-- 구조 구분 라벨 -->
+        <Style x:Key="StructLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"            Value="13"/>
+            <Setter Property="FontWeight"          Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="14">
@@ -76,7 +116,7 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
-            <TextBlock Text="  ..." FontSize="11" Foreground="#2563EB" VerticalAlignment="Center"
+            <TextBlock Text="  ..." FontSize="12" Foreground="#2563EB" VerticalAlignment="Center"
                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
         </StackPanel>
 
@@ -87,8 +127,13 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 좌측 -->
-            <Grid Grid.Column="0">
+            <!-- 좌측: Physical Structure -->
+            <DockPanel Grid.Column="0">
+                <Border DockPanel.Dock="Top" Background="#EAF0F8" BorderBrush="#C7CED9" BorderThickness="1"
+                        Margin="0,0,0,6" Padding="0,6">
+                    <TextBlock Text="Physical Structure" Style="{StaticResource StructLabel}" Foreground="#1565C0"/>
+                </Border>
+                <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/><RowDefinition Height="8"/>
                     <RowDefinition Height="*"/><RowDefinition Height="8"/>
@@ -97,32 +142,32 @@
 
                 <DockPanel Grid.Row="0">
                     <TextBlock DockPanel.Dock="Top" Text="RACK" Style="{StaticResource Hdr}"/>
-                    <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding Racks}"
+                    <DataGrid Style="{StaticResource DG}" ColumnHeaderStyle="{StaticResource PhysHdr}" ItemsSource="{Binding Racks}"
                               SelectedItem="{Binding SelectedRack, Mode=TwoWay}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="RackID"   Binding="{Binding RackId}"   Width="70"/>
+                            <DataGridTextColumn Header="RackID"   Binding="{Binding RackId}"   Width="Auto" MinWidth="60"/>
                             <DataGridTextColumn Header="Name"     Binding="{Binding Name}"     Width="*"/>
-                            <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="60"/>
+                            <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="Auto" MinWidth="56"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
 
                 <DockPanel Grid.Row="2">
                     <TextBlock DockPanel.Dock="Top" Text="MODULE" Style="{StaticResource Hdr}"/>
-                    <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding Modules}"
+                    <DataGrid Style="{StaticResource DG}" ColumnHeaderStyle="{StaticResource PhysHdr}" ItemsSource="{Binding Modules}"
                               SelectedItem="{Binding SelectedModule, Mode=TwoWay}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ModuleID"   Binding="{Binding ModuleId}"   Width="70"/>
+                            <DataGridTextColumn Header="ModuleID"   Binding="{Binding ModuleId}"   Width="Auto" MinWidth="60"/>
                             <DataGridTextColumn Header="Name"       Binding="{Binding Name}"       Width="*"/>
-                            <DataGridTextColumn Header="Activity"   Binding="{Binding Activity}"   Width="60"/>
-                            <DataGridTextColumn Header="ModuleType" Binding="{Binding ModuleType}" Width="100"/>
+                            <DataGridTextColumn Header="Activity"   Binding="{Binding Activity}"   Width="Auto" MinWidth="56"/>
+                            <DataGridTextColumn Header="ModuleType" Binding="{Binding ModuleType}" Width="Auto" MinWidth="88"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
 
                 <DockPanel Grid.Row="4">
                     <TextBlock DockPanel.Dock="Top" Text="CHANNEL" Style="{StaticResource Hdr}"/>
-                    <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding Channels}"
+                    <DataGrid Style="{StaticResource DG}" ColumnHeaderStyle="{StaticResource PhysHdr}" ItemsSource="{Binding Channels}"
                               SelectedItem="{Binding SelectedChannel, Mode=TwoWay}">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -134,17 +179,23 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ChannelID"   Binding="{Binding ChannelId}"   Width="70"/>
+                            <DataGridTextColumn Header="ChannelID"   Binding="{Binding ChannelId}"   Width="Auto" MinWidth="60"/>
                             <DataGridTextColumn Header="Name"        Binding="{Binding Name}"        Width="*"/>
-                            <DataGridTextColumn Header="Activity"    Binding="{Binding Activity}"    Width="60"/>
-                            <DataGridTextColumn Header="ChannelType" Binding="{Binding ChannelType}" Width="100"/>
+                            <DataGridTextColumn Header="Activity"    Binding="{Binding Activity}"    Width="Auto" MinWidth="56"/>
+                            <DataGridTextColumn Header="ChannelType" Binding="{Binding ChannelType}" Width="Auto" MinWidth="88"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
-            </Grid>
+                </Grid>
+            </DockPanel>
 
-            <!-- 우측 -->
-            <Grid Grid.Column="2">
+            <!-- 우측: Logical Structure -->
+            <DockPanel Grid.Column="2">
+                <Border DockPanel.Dock="Top" Background="#E1F0E6" BorderBrush="#B6D7C0" BorderThickness="1"
+                        Margin="0,0,0,6" Padding="0,6">
+                    <TextBlock Text="Logical Structure" Style="{StaticResource StructLabel}" Foreground="#1E7D34"/>
+                </Border>
+                <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/><RowDefinition Height="8"/>
                     <RowDefinition Height="*"/><RowDefinition Height="8"/>
@@ -153,31 +204,31 @@
 
                 <DockPanel Grid.Row="0">
                     <TextBlock DockPanel.Dock="Top" Text="TRAIN" Style="{StaticResource Hdr}"/>
-                    <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding Trains}"
+                    <DataGrid Style="{StaticResource DGLogical}" ColumnHeaderStyle="{StaticResource LogHdr}" ItemsSource="{Binding Trains}"
                               SelectedItem="{Binding SelectedTrain, Mode=TwoWay}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="TrainID"  Binding="{Binding TrainId}"  Width="70"/>
+                            <DataGridTextColumn Header="TrainID"  Binding="{Binding TrainId}"  Width="Auto" MinWidth="60"/>
                             <DataGridTextColumn Header="Name"     Binding="{Binding Name}"     Width="*"/>
-                            <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="60"/>
+                            <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="Auto" MinWidth="56"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
 
                 <DockPanel Grid.Row="2">
                     <TextBlock DockPanel.Dock="Top" Text="COMPONENT" Style="{StaticResource Hdr}"/>
-                    <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding Components}"
+                    <DataGrid Style="{StaticResource DGLogical}" ColumnHeaderStyle="{StaticResource LogHdr}" ItemsSource="{Binding Components}"
                               SelectedItem="{Binding SelectedComponent, Mode=TwoWay}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ComponentID" Binding="{Binding ComponentId}" Width="90"/>
+                            <DataGridTextColumn Header="ComponentID" Binding="{Binding ComponentId}" Width="Auto" MinWidth="80"/>
                             <DataGridTextColumn Header="Name"        Binding="{Binding Name}"        Width="*"/>
-                            <DataGridTextColumn Header="Activity"    Binding="{Binding Activity}"    Width="60"/>
+                            <DataGridTextColumn Header="Activity"    Binding="{Binding Activity}"    Width="Auto" MinWidth="56"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
 
                 <DockPanel Grid.Row="4">
                     <TextBlock DockPanel.Dock="Top" Text="POINT" Style="{StaticResource Hdr}"/>
-                    <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding Points}"
+                    <DataGrid Style="{StaticResource DGLogical}" ColumnHeaderStyle="{StaticResource LogHdr}" ItemsSource="{Binding Points}"
                               SelectedItem="{Binding SelectedPoint, Mode=TwoWay}">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -189,29 +240,30 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="PointID"  Binding="{Binding PointId}"  Width="70"/>
+                            <DataGridTextColumn Header="PointID"  Binding="{Binding PointId}"  Width="Auto" MinWidth="60"/>
                             <DataGridTextColumn Header="Name"     Binding="{Binding Name}"     Width="*"/>
-                            <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="60"/>
+                            <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="Auto" MinWidth="56"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
-            </Grid>
+                </Grid>
+            </DockPanel>
         </Grid>
 
         <!-- ASSIGN 목록 -->
         <DockPanel Grid.Row="2" Margin="0,10,0,0">
-            <TextBlock DockPanel.Dock="Top" Text="ASSIGN" Style="{StaticResource Hdr}"/>
-            <DataGrid Style="{StaticResource DG}" ItemsSource="{Binding AssignList}"
+            <TextBlock DockPanel.Dock="Top" Text="ASSIGN LIST" Style="{StaticResource Hdr}"/>
+            <DataGrid Style="{StaticResource DG}" ColumnHeaderStyle="{StaticResource PhysHdr}" ItemsSource="{Binding AssignList}"
                       SelectedItem="{Binding SelectedAssign, Mode=TwoWay}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="StationID"   Binding="{Binding StationId}"   Width="70"/>
-                    <DataGridTextColumn Header="RackID"      Binding="{Binding RackId}"      Width="60"/>
-                    <DataGridTextColumn Header="ModuleID"    Binding="{Binding ModuleId}"    Width="70"/>
-                    <DataGridTextColumn Header="ChannelID"   Binding="{Binding ChannelId}"   Width="70"/>
+                    <DataGridTextColumn Header="StationID"   Binding="{Binding StationId}"   Width="Auto" MinWidth="60"/>
+                    <DataGridTextColumn Header="RackID"      Binding="{Binding RackId}"      Width="Auto" MinWidth="56"/>
+                    <DataGridTextColumn Header="ModuleID"    Binding="{Binding ModuleId}"    Width="Auto" MinWidth="60"/>
+                    <DataGridTextColumn Header="ChannelID"   Binding="{Binding ChannelId}"   Width="Auto" MinWidth="60"/>
                     <DataGridTextColumn Header="ChannelName" Binding="{Binding ChannelName}" Width="*"/>
-                    <DataGridTextColumn Header="TrainID"     Binding="{Binding TrainId}"     Width="60"/>
-                    <DataGridTextColumn Header="ComponentID" Binding="{Binding ComponentId}" Width="90"/>
-                    <DataGridTextColumn Header="PointID"     Binding="{Binding PointId}"     Width="60"/>
+                    <DataGridTextColumn Header="TrainID"     Binding="{Binding TrainId}"     Width="Auto" MinWidth="56"/>
+                    <DataGridTextColumn Header="ComponentID" Binding="{Binding ComponentId}" Width="Auto" MinWidth="80"/>
+                    <DataGridTextColumn Header="PointID"     Binding="{Binding PointId}"     Width="Auto" MinWidth="56"/>
                     <DataGridTextColumn Header="PointName"   Binding="{Binding PointName}"   Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>
@@ -228,27 +280,27 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="선택 채널 : " FontSize="11" Foreground="#64748B"/>
-                    <TextBlock Text="{Binding SelectedChannelText}" FontSize="11" FontWeight="SemiBold" Foreground="#1F2937"/>
+                    <TextBlock Text="선택 채널 : " FontSize="12" Foreground="#64748B"/>
+                    <TextBlock Text="{Binding SelectedChannelText}" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937"/>
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="&#x2194;" FontSize="15" Foreground="#2563EB"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="선택 포인트 : " FontSize="11" Foreground="#64748B"/>
-                    <TextBlock Text="{Binding SelectedPointText}" FontSize="11" FontWeight="SemiBold" Foreground="#1F2937"/>
+                    <TextBlock Text="선택 포인트 : " FontSize="12" Foreground="#64748B"/>
+                    <TextBlock Text="{Binding SelectedPointText}" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937"/>
                 </StackPanel>
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Command="{Binding AssignCommand}" Style="{StaticResource Btn}" IsEnabled="{Binding CanAssign}" Margin="0,0,8,0">
-                        <TextBlock Text="ASSIGN" FontSize="11" FontWeight="SemiBold" Foreground="#1565C0"/>
+                        <TextBlock Text="ASSIGN" FontSize="12" FontWeight="SemiBold" Foreground="#1565C0"/>
                     </Button>
                     <Button Command="{Binding UnAssignCommand}" Style="{StaticResource Btn}" IsEnabled="{Binding CanUnAssign}">
-                        <TextBlock Text="UN-ASSIGN" FontSize="11" FontWeight="SemiBold" Foreground="#C0392B"/>
+                        <TextBlock Text="UN-ASSIGN" FontSize="12" FontWeight="SemiBold" Foreground="#C0392B"/>
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <TextBlock Grid.Row="4" Text="{Binding Status}" FontSize="11" Foreground="#64748B"
+        <TextBlock Grid.Row="4" Text="{Binding Status}" FontSize="12" Foreground="#64748B"
                    Margin="2,8,0,0" TextTrimming="CharacterEllipsis"/>
     </Grid>
 </UserControl>

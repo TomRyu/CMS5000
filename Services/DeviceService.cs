@@ -718,26 +718,83 @@ public static class DeviceService
         return list;
     }
 
-    public static async Task SetPointAssignAsync(int stationId, int trainId, int compId, int pointId, int channelId)
+    /// <summary>
+    /// 매칭 등록. 원본 frmAssign(P_INSERT_ASSIGN)과 동일하게 ASSIGN 테이블에 행을 넣고,
+    /// general_channel/point 의 assign 플래그(0/1)를 1로 동기화한다. 키는 전역 유일 channel_index.
+    /// </summary>
+    public static async Task InsertAssignAsync(int stationId, int channelIndex, int trainId, int compId, int pointId)
     {
         await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
-        await using var cmd  = conn.CreateCommand();
-        cmd.CommandText = """
-            UPDATE public.point
-            SET    assign = @assign
-            WHERE  stationid = @sid AND trainid = @tid AND componentid = @cid AND pointid = @pid
-            """;
-        cmd.Parameters.AddWithValue("assign", channelId == 0 ? DBNull.Value : (object)channelId);
-        cmd.Parameters.AddWithValue("sid",    stationId);
-        cmd.Parameters.AddWithValue("tid",    trainId);
-        cmd.Parameters.AddWithValue("cid",    compId);
-        cmd.Parameters.AddWithValue("pid",    pointId);
-        await cmd.ExecuteNonQueryAsync();
+        await using var tx   = await conn.BeginTransactionAsync();
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = """
+                INSERT INTO public.assign(channel_index, stationid, trainid, componentid, pointid, createdate)
+                VALUES(@ci, @sid, @tid, @cid, @pid, now());
+
+                UPDATE public.general_channel SET assign = 1 WHERE stationid = @sid AND channel_index = @ci;
+                UPDATE public.point           SET assign = 1
+                 WHERE stationid = @sid AND trainid = @tid AND componentid = @cid AND pointid = @pid;
+                """;
+            cmd.Parameters.AddWithValue("ci",  channelIndex);
+            cmd.Parameters.AddWithValue("sid", stationId);
+            cmd.Parameters.AddWithValue("tid", trainId);
+            cmd.Parameters.AddWithValue("cid", compId);
+            cmd.Parameters.AddWithValue("pid", pointId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        await tx.CommitAsync();
+    }
+
+    /// <summary>
+    /// 매칭 해제. 포인트로 ASSIGN 행을 찾아 삭제(원본 P_DEL_ASSIGN)하고, 관련 채널/포인트의
+    /// assign 플래그를 해제한다. point↔channel 은 1:1 이므로 삭제 후 플래그를 0으로 되돌린다.
+    /// </summary>
+    public static async Task DeleteAssignByPointAsync(int stationId, int trainId, int compId, int pointId)
+    {
+        await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
+        await using var tx   = await conn.BeginTransactionAsync();
+
+        int? channelIndex = null;
+        await using (var del = conn.CreateCommand())
+        {
+            del.Transaction = tx;
+            del.CommandText = """
+                DELETE FROM public.assign
+                 WHERE stationid = @sid AND trainid = @tid AND componentid = @cid AND pointid = @pid
+                RETURNING channel_index
+                """;
+            del.Parameters.AddWithValue("sid", stationId);
+            del.Parameters.AddWithValue("tid", trainId);
+            del.Parameters.AddWithValue("cid", compId);
+            del.Parameters.AddWithValue("pid", pointId);
+            var ci = await del.ExecuteScalarAsync();
+            if (ci != null && ci != DBNull.Value) channelIndex = Convert.ToInt32(ci);
+        }
+
+        await using (var upd = conn.CreateCommand())
+        {
+            upd.Transaction = tx;
+            upd.CommandText = """
+                UPDATE public.point SET assign = 0
+                 WHERE stationid = @sid AND trainid = @tid AND componentid = @cid AND pointid = @pid;
+                UPDATE public.general_channel SET assign = 0
+                 WHERE stationid = @sid AND channel_index = @ci AND @ci > 0;
+                """;
+            upd.Parameters.AddWithValue("sid", stationId);
+            upd.Parameters.AddWithValue("tid", trainId);
+            upd.Parameters.AddWithValue("cid", compId);
+            upd.Parameters.AddWithValue("pid", pointId);
+            upd.Parameters.AddWithValue("ci",  channelIndex ?? 0);
+            await upd.ExecuteNonQueryAsync();
+        }
+        await tx.CommitAsync();
     }
 
     // ────────────────────────────────────────────────────────
     //  ASSIGN(매칭) 화면 — 원본 frmAssign 캐스케이드 조회
-    //  (CMS-5000 은 point.assign = channelid 모델을 사용)
+    //  source of truth = ASSIGN 테이블(키=channel_index). point/general_channel.assign 은 0/1 플래그.
     // ────────────────────────────────────────────────────────
 
     public static async Task<List<AssignRackRow>> GetAssignRacksAsync(int stationId)
@@ -780,7 +837,7 @@ public static class DeviceService
         cmd.CommandText = """
             SELECT gc.channelid::int, COALESCE(gc.name,''), COALESCE(gc.activity::int,0),
                    COALESCE(ct.name,''), gc.channel_index::int,
-                   EXISTS(SELECT 1 FROM public.point p WHERE p.stationid=gc.stationid AND p.assign=gc.channelid) AS assigned
+                   EXISTS(SELECT 1 FROM public.assign a WHERE a.stationid=gc.stationid AND a.channel_index=gc.channel_index) AS assigned
             FROM   public.general_channel gc
             LEFT   JOIN public.channel_type ct ON gc.channeltype = ct.channeltype
             WHERE  gc.stationid=@s AND gc.rackid=@r AND gc.moduleid=@m
@@ -836,11 +893,13 @@ public static class DeviceService
         await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
         await using var cmd  = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT pointid::int, COALESCE(name,''), COALESCE(activity::int,0),
-                   (COALESCE(assign,0) > 0) AS assigned
-            FROM   public.point
-            WHERE  stationid=@s AND trainid=@t AND componentid=@c
-            ORDER  BY pointid
+            SELECT p.pointid::int, COALESCE(p.name,''), COALESCE(p.activity::int,0),
+                   EXISTS(SELECT 1 FROM public.assign a
+                          WHERE a.stationid=p.stationid AND a.trainid=p.trainid
+                            AND a.componentid=p.componentid AND a.pointid=p.pointid) AS assigned
+            FROM   public.point p
+            WHERE  p.stationid=@s AND p.trainid=@t AND p.componentid=@c
+            ORDER  BY p.pointid
             """;
         cmd.Parameters.AddWithValue("s", stationId);
         cmd.Parameters.AddWithValue("t", trainId);
@@ -852,7 +911,7 @@ public static class DeviceService
         return list;
     }
 
-    /// <summary>ASSIGN 목록(원본 FpSprAssign): point.assign 으로 연결된 채널·포인트 조인.</summary>
+    /// <summary>ASSIGN 목록(원본 FpSprAssign): ASSIGN 테이블을 채널(channel_index)·포인트와 조인.</summary>
     public static async Task<List<AssignListRow>> GetAssignListAsync(int stationId)
     {
         await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
@@ -860,9 +919,11 @@ public static class DeviceService
         cmd.CommandText = """
             SELECT gc.stationid::int, gc.rackid::int, gc.moduleid::int, gc.channelid::int, COALESCE(gc.name,''),
                    p.trainid::int, p.componentid::int, p.pointid::int, COALESCE(p.name,'')
-            FROM   public.point p
-            JOIN   public.general_channel gc ON gc.stationid = p.stationid AND gc.channelid = p.assign
-            WHERE  p.stationid=@s AND COALESCE(p.assign,0) > 0
+            FROM   public.assign a
+            JOIN   public.general_channel gc ON gc.stationid = a.stationid AND gc.channel_index = a.channel_index
+            JOIN   public.point p            ON p.stationid  = a.stationid AND p.trainid = a.trainid
+                                            AND p.componentid = a.componentid AND p.pointid = a.pointid
+            WHERE  a.stationid=@s
             ORDER  BY gc.rackid, gc.moduleid, gc.channelid
             """;
         cmd.Parameters.AddWithValue("s", stationId);

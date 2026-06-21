@@ -20,6 +20,12 @@ public static class LocalSettingsService
         public double? WindowWidth  { get; set; }
         public double? WindowHeight { get; set; }
         public bool    WindowMaximized { get; set; }
+
+        // 장비구성 화면 좌측(STATION/RACK/TRAIN) 패널 폭. null이면 기본값 사용.
+        public double? DevicePanelWidth { get; set; }
+
+        // 장비구성 화면 좌측 패널 접힘 상태.
+        public bool DevicePanelCollapsed { get; set; }
     }
 
     private static readonly object Gate = new();

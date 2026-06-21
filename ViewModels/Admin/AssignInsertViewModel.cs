@@ -34,8 +34,9 @@ public class AssignInsertViewModel : ViewModelBase
     public ObservableCollection<AssignComponentRow> Components { get; } = [];
     public ObservableCollection<AssignPointRow>     Points     { get; } = [];
 
-    // ── 하단: ASSIGN 목록 ───────────────────────────────────
+    // ── 하단: ASSIGN 목록 (선택된 채널/포인트에 해당하는 것만 표시) ──
     public ObservableCollection<AssignListRow> AssignList { get; } = [];
+    private readonly List<AssignListRow> _allAssigns = [];
 
     private AssignRackRow?     _selRack;
     private AssignModuleRow?   _selModule;
@@ -45,35 +46,39 @@ public class AssignInsertViewModel : ViewModelBase
     private AssignPointRow?    _selPoint;
     private AssignListRow?     _selAssign;
 
+    // ASSIGN 목록 필터 기준: 마지막으로 클릭한 쪽(물리/논리)의 선택 계층으로 필터한다(원본 frmAssign 동작).
+    private enum FilterSide { None, Physical, Logical }
+    private FilterSide _filterSide = FilterSide.None;
+
     public AssignRackRow? SelectedRack
     {
         get => _selRack;
-        set { SetProperty(ref _selRack, value); _ = OnRackChangedAsync(); }
+        set { _filterSide = FilterSide.Physical; SetProperty(ref _selRack, value); _ = OnRackChangedAsync(); }
     }
     public AssignModuleRow? SelectedModule
     {
         get => _selModule;
-        set { SetProperty(ref _selModule, value); _ = OnModuleChangedAsync(); }
+        set { _filterSide = FilterSide.Physical; SetProperty(ref _selModule, value); _ = OnModuleChangedAsync(); }
     }
     public AssignChannelRow? SelectedChannel
     {
         get => _selChannel;
-        set { SetProperty(ref _selChannel, value); RaiseSelections(); }
+        set { _filterSide = FilterSide.Physical; SetProperty(ref _selChannel, value); RaiseSelections(); }
     }
     public AssignTrainRow? SelectedTrain
     {
         get => _selTrain;
-        set { SetProperty(ref _selTrain, value); _ = OnTrainChangedAsync(); }
+        set { _filterSide = FilterSide.Logical; SetProperty(ref _selTrain, value); _ = OnTrainChangedAsync(); }
     }
     public AssignComponentRow? SelectedComponent
     {
         get => _selComponent;
-        set { SetProperty(ref _selComponent, value); _ = OnComponentChangedAsync(); }
+        set { _filterSide = FilterSide.Logical; SetProperty(ref _selComponent, value); _ = OnComponentChangedAsync(); }
     }
     public AssignPointRow? SelectedPoint
     {
         get => _selPoint;
-        set { SetProperty(ref _selPoint, value); RaiseSelections(); }
+        set { _filterSide = FilterSide.Logical; SetProperty(ref _selPoint, value); RaiseSelections(); }
     }
     public AssignListRow? SelectedAssign
     {
@@ -109,6 +114,33 @@ public class AssignInsertViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanAssign));
         OnPropertyChanged(nameof(SelectedChannelText));
         OnPropertyChanged(nameof(SelectedPointText));
+        ApplyAssignFilter();
+    }
+
+    /// <summary>
+    /// ASSIGN 목록 표시. 원본 frmAssign 과 동일하게, 선택이 없으면 스테이션 전체를 보여주고,
+    /// 마지막으로 클릭한 쪽(물리=RACK/MODULE/CHANNEL, 논리=TRAIN/COMPONENT/POINT)의
+    /// 선택된 계층만큼 점진적으로 필터링한다. (RACK 만 선택해도 그 RACK 의 매칭이 모두 보인다.)
+    /// </summary>
+    private void ApplyAssignFilter()
+    {
+        AssignList.Clear();
+        foreach (var a in _allAssigns)
+        {
+            bool ok = _filterSide switch
+            {
+                FilterSide.Physical =>
+                       (_selRack    == null || a.RackId    == _selRack.RackId)
+                    && (_selModule  == null || a.ModuleId  == _selModule.ModuleId)
+                    && (_selChannel == null || a.ChannelId == _selChannel.ChannelId),
+                FilterSide.Logical =>
+                       (_selTrain     == null || a.TrainId     == _selTrain.TrainId)
+                    && (_selComponent == null || a.ComponentId == _selComponent.ComponentId)
+                    && (_selPoint     == null || a.PointId     == _selPoint.PointId),
+                _ => true,   // 선택 없음 → 전체(첫 화면)
+            };
+            if (ok) AssignList.Add(a);
+        }
     }
 
     public async Task LoadAsync()
@@ -126,6 +158,7 @@ public class AssignInsertViewModel : ViewModelBase
 
             _selRack = null; _selModule = null; _selChannel = null;
             _selTrain = null; _selComponent = null; _selPoint = null; _selAssign = null;
+            _filterSide = FilterSide.None;
             OnPropertyChanged(nameof(SelectedRack)); OnPropertyChanged(nameof(SelectedTrain));
             RaiseSelections(); OnPropertyChanged(nameof(CanUnAssign));
         }
@@ -135,8 +168,9 @@ public class AssignInsertViewModel : ViewModelBase
 
     private async Task ReloadAssignListAsync()
     {
-        AssignList.Clear();
-        foreach (var a in await DeviceService.GetAssignListAsync(_stationId)) AssignList.Add(a);
+        _allAssigns.Clear();
+        foreach (var a in await DeviceService.GetAssignListAsync(_stationId)) _allAssigns.Add(a);
+        ApplyAssignFilter();
     }
 
     private async Task OnRackChangedAsync()
@@ -182,8 +216,8 @@ public class AssignInsertViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            await DeviceService.SetPointAssignAsync(_stationId, SelectedTrain.TrainId, SelectedComponent.ComponentId,
-                                                    SelectedPoint.PointId, SelectedChannel.ChannelId);
+            await DeviceService.InsertAssignAsync(_stationId, SelectedChannel.ChannelIndex,
+                                                  SelectedTrain.TrainId, SelectedComponent.ComponentId, SelectedPoint.PointId);
             Status = $"매칭 완료: {SelectedChannelText}  ←→  {SelectedPointText}";
             await RefreshAfterChangeAsync();
         }
@@ -198,7 +232,7 @@ public class AssignInsertViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            await DeviceService.SetPointAssignAsync(_stationId, a.TrainId, a.ComponentId, a.PointId, 0);
+            await DeviceService.DeleteAssignByPointAsync(_stationId, a.TrainId, a.ComponentId, a.PointId);
             Status = $"매칭 해제: R{a.RackId:D2}-M{a.ModuleId:D2}-CH{a.ChannelId:D2} ←→ T{a.TrainId:D2}-C{a.ComponentId:D2}-P{a.PointId:D2}";
             await RefreshAfterChangeAsync();
         }

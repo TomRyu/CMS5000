@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Npgsql;
 
@@ -14,8 +16,53 @@ public static class PostgresService
     public static string CurrentUsername { get; private set; } = "";
     public static string CurrentPassword { get; private set; } = "";
 
+    /// <summary>
+    /// 사용자별 영구 접속정보 경로(%APPDATA%\CMS5000\connection.json).
+    /// 앱 폴더(appsettings.json)와 분리되어 재빌드·Velopack 업데이트와 무관하게 마지막 DB가 유지된다.
+    /// </summary>
+    private static string UserConfigPath =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                     "CMS5000", "connection.json");
+
+    /// <summary>
+    /// 사용자 영구 접속정보(%APPDATA%\CMS5000\connection.json)가 존재하는지.
+    /// false 면 최초 실행으로 보고, 시작 시 접속 다이얼로그로 접속정보를 입력받는다.
+    /// </summary>
+    public static bool HasUserConfig => File.Exists(UserConfigPath);
+
+    // connection.json 비밀번호 암호화 마커(Windows DPAPI, CurrentUser 범위).
+    private const string EncPrefix = "enc:v1:";
+    // 마지막으로 읽은 connection.json 의 비밀번호가 평문(레거시)이었으면 true → 시작 시 암호문으로 재저장.
+    private static bool _userPwWasPlaintext;
+
+    /// <summary>비밀번호를 DPAPI(CurrentUser)로 암호화해 "enc:v1:&lt;base64&gt;" 형태로 만든다.</summary>
+    private static string ProtectPassword(string plain)
+    {
+        if (string.IsNullOrEmpty(plain)) return plain;
+        try
+        {
+            var enc = ProtectedData.Protect(Encoding.UTF8.GetBytes(plain), null, DataProtectionScope.CurrentUser);
+            return EncPrefix + Convert.ToBase64String(enc);
+        }
+        catch { return plain; }   // 암호화 불가 시 평문 저장(최악의 경우에도 동작 보장)
+    }
+
+    /// <summary>"enc:v1:" 접두사가 있으면 복호화, 없으면 레거시 평문으로 간주. 복호화 실패 시 빈 문자열.</summary>
+    private static string UnprotectPassword(string stored)
+    {
+        if (string.IsNullOrEmpty(stored) || !stored.StartsWith(EncPrefix, StringComparison.Ordinal))
+            return stored;   // 레거시 평문
+        try
+        {
+            var data = Convert.FromBase64String(stored[EncPrefix.Length..]);
+            return Encoding.UTF8.GetString(ProtectedData.Unprotect(data, null, DataProtectionScope.CurrentUser));
+        }
+        catch { return ""; } // 다른 사용자/PC 등으로 복호화 실패 → 빈 값(재입력 유도)
+    }
+
     public static void Initialize()
     {
+        // 1) 기본값: 번들 appsettings.json (폴백/템플릿). 배포본은 자격증명이 비어 있을 수 있다.
         var configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         if (!File.Exists(configPath))
             throw new FileNotFoundException("appsettings.json 파일을 찾을 수 없습니다.", configPath);
@@ -23,13 +70,47 @@ public static class PostgresService
         using var doc = JsonDocument.Parse(File.ReadAllText(configPath));
         var pg = doc.RootElement.GetProperty("PostgreSQL");
 
-        string host = pg.GetProperty("Host").GetString()     ?? throw new InvalidOperationException("PostgreSQL.Host 설정 누락");
-        string db   = pg.GetProperty("Database").GetString() ?? throw new InvalidOperationException("PostgreSQL.Database 설정 누락");
-        string user = pg.GetProperty("Username").GetString() ?? throw new InvalidOperationException("PostgreSQL.Username 설정 누락");
-        string pw   = pg.GetProperty("Password").GetString() ?? throw new InvalidOperationException("PostgreSQL.Password 설정 누락");
+        string host = pg.GetProperty("Host").GetString()     ?? "";
+        string db   = pg.GetProperty("Database").GetString() ?? "";
+        string user = pg.GetProperty("Username").GetString() ?? "";
+        string pw   = pg.GetProperty("Password").GetString() ?? "";
 
-        _ds = BuildDataSource(host, db, user, pw);
+        // 2) 사용자 영구 설정이 있으면 그 값으로 덮어씀(= 마지막 접속 DB 복원)
+        TryLoadUserConfig(ref host, ref db, ref user, ref pw);
+
         CurrentHost = host; CurrentDatabase = db; CurrentUsername = user; CurrentPassword = pw;
+
+        // 3) 접속정보가 모두 채워졌을 때만 데이터소스를 만든다.
+        //    비어 있으면(최초 배포본) _ds 를 null 로 두고, 시작 시 다이얼로그 입력 후 ReconfigureAsync 가 생성한다.
+        if (!string.IsNullOrWhiteSpace(host) && !string.IsNullOrWhiteSpace(db) && !string.IsNullOrWhiteSpace(user))
+            _ds = BuildDataSource(host, db, user, pw);
+
+        // 4) 레거시 평문 connection.json 이면 암호문으로 1회 마이그레이션.
+        if (_userPwWasPlaintext && !string.IsNullOrEmpty(pw))
+        {
+            SaveConnection(host, db, user, pw);
+            _userPwWasPlaintext = false;
+        }
+    }
+
+    /// <summary>%APPDATA% 의 connection.json 이 있으면 접속정보를 읽어 덮어쓴다.</summary>
+    private static void TryLoadUserConfig(ref string host, ref string db, ref string user, ref string pw)
+    {
+        try
+        {
+            if (!File.Exists(UserConfigPath)) return;
+            using var doc = JsonDocument.Parse(File.ReadAllText(UserConfigPath));
+            var r = doc.RootElement;
+            if (r.TryGetProperty("Host", out var h)     && h.GetString() is { Length: > 0 } hv) host = hv;
+            if (r.TryGetProperty("Database", out var d) && d.GetString() is { Length: > 0 } dv) db   = dv;
+            if (r.TryGetProperty("Username", out var u) && u.GetString() is { Length: > 0 } uv) user = uv;
+            if (r.TryGetProperty("Password", out var p) && p.GetString() is { } pv)
+            {
+                _userPwWasPlaintext = !pv.StartsWith(EncPrefix, StringComparison.Ordinal) && pv.Length > 0;
+                pw = UnprotectPassword(pv);
+            }
+        }
+        catch { /* 손상 시 무시하고 기본값(appsettings) 사용 */ }
     }
 
     private static NpgsqlDataSource BuildDataSource(string host, string db, string user, string pw)
@@ -49,7 +130,7 @@ public static class PostgresService
 
     /// <summary>
     /// 원본 ConnectDatabaseChecker: 새 접속정보로 연결을 시도해 성공하면 데이터소스를 교체하고
-    /// appsettings.json 에 저장한다. 실패하면 기존 연결을 유지하고 false 를 반환.
+    /// %APPDATA%\CMS5000\connection.json 에 저장한다. 실패하면 기존 연결을 유지하고 false 를 반환.
     /// </summary>
     public static async Task<bool> ReconfigureAsync(string host, string db, string user, string pw)
     {
@@ -73,46 +154,32 @@ public static class PostgresService
         IsManuallyDisconnected = false;
         old?.Dispose();
 
-        SaveToAppSettings(host, db, user, pw);
+        SaveConnection(host, db, user, pw);
         return true;
     }
 
-    private static void SaveToAppSettings(string host, string db, string user, string pw)
+    /// <summary>
+    /// 마지막 접속정보를 %APPDATA%\CMS5000\connection.json 에 저장한다.
+    /// 앱 설치 폴더가 아닌 사용자 영구 경로이므로 재빌드·업데이트 후에도 유지된다.
+    /// </summary>
+    private static void SaveConnection(string host, string db, string user, string pw)
     {
         try
         {
-            var configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-            using var doc = JsonDocument.Parse(File.ReadAllText(configPath));
-            var root = doc.RootElement.Clone();
+            var path = UserConfigPath;
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
             using var ms = new MemoryStream();
             using (var w = new Utf8JsonWriter(ms, new JsonWriterOptions { Indented = true }))
             {
                 w.WriteStartObject();
-                foreach (var prop in root.EnumerateObject())
-                {
-                    if (prop.NameEquals("PostgreSQL"))
-                    {
-                        w.WritePropertyName("PostgreSQL");
-                        w.WriteStartObject();
-                        w.WriteString("Host", host);
-                        w.WriteString("Database", db);
-                        w.WriteString("Username", user);
-                        w.WriteString("Password", pw);
-                        // PostgreSQL 하위의 그 외 키는 보존
-                        foreach (var sub in prop.Value.EnumerateObject())
-                            if (sub.Name is not ("Host" or "Database" or "Username" or "Password"))
-                                sub.WriteTo(w);
-                        w.WriteEndObject();
-                    }
-                    else
-                    {
-                        prop.WriteTo(w);
-                    }
-                }
+                w.WriteString("Host", host);
+                w.WriteString("Database", db);
+                w.WriteString("Username", user);
+                w.WriteString("Password", ProtectPassword(pw));   // DPAPI 암호화 저장
                 w.WriteEndObject();
             }
-            File.WriteAllBytes(configPath, ms.ToArray());
+            File.WriteAllBytes(path, ms.ToArray());
         }
         catch { /* 저장 실패는 무시(런타임 연결은 이미 교체됨) */ }
     }
@@ -136,6 +203,46 @@ public static class PostgresService
     public static void Reconnect()
     {
         IsManuallyDisconnected = false;
+    }
+
+    /// <summary>
+    /// 현재 접속된 PostgreSQL 서버에서 "CMS5000 프로그램과 관련된" DB 이름만 조회한다.
+    /// 판별 기준: public 스키마에 CMS 시그니처 테이블(general_channel)이 존재하는 DB.
+    /// (codegen·postgres 등 무관한 DB는 자동 제외. 이름이 아닌 스키마로 판별하므로 정확.)
+    /// Connection > Database Connect 다이얼로그의 Database 콤보박스 채우기에 사용.
+    /// </summary>
+    public static async Task<List<string>> GetDatabaseNamesAsync()
+    {
+        // 1) 접속 가능한 후보 DB 목록(템플릿/접속불가 제외)
+        var candidates = new List<string>();
+        await using (var conn = await DataSource.OpenConnectionAsync())
+        await using (var cmd  = new NpgsqlCommand(
+            "SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn ORDER BY datname", conn))
+        await using (var r = await cmd.ExecuteReaderAsync())
+            while (await r.ReadAsync())
+                candidates.Add(r.GetString(0));
+
+        // 2) 각 후보에 접속해 CMS 시그니처 테이블 존재여부 검사
+        var result = new List<string>();
+        foreach (var db in candidates)
+        {
+            try
+            {
+                var csb = new NpgsqlConnectionStringBuilder
+                {
+                    Host = CurrentHost, Database = db, Username = CurrentUsername, Password = CurrentPassword,
+                    Timeout = 5, CommandTimeout = 5, Pooling = false,
+                };
+                await using var c = new NpgsqlConnection(csb.ConnectionString);
+                await c.OpenAsync();
+                await using var cmd = new NpgsqlCommand(
+                    "SELECT to_regclass('public.general_channel') IS NOT NULL", c);
+                if (await cmd.ExecuteScalarAsync() is bool ok && ok)
+                    result.Add(db);
+            }
+            catch { /* 접근 불가/검사 실패 DB는 목록에서 제외 */ }
+        }
+        return result;
     }
 
     public static async Task EnsureReachableAsync()

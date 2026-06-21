@@ -25,9 +25,9 @@ jobs:
         run: dotnet tool install -g vpk
 
       - name: appsettings.json 생성 (Secrets → 파일)
-        # 보안: 공개 publishable 키만 탑재(레거시 anon/service_role 미사용). 민감 작업은 Edge Functions가 처리.
+        # PostgreSQL 접속정보를 GitHub Secrets에서 주입. 소스/릴리스에 자격증명 비노출.
         run: |
-          $content = '{"Supabase":{"Url":"${{ secrets.SUPABASE_URL }}","ApiKey":"${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"}}'
+          $content = '{"PostgreSQL":{"Host":"${{ secrets.PG_HOST }}","Database":"${{ secrets.PG_DATABASE }}","Username":"${{ secrets.PG_USERNAME }}","Password":"${{ secrets.PG_PASSWORD }}"}}'
           [System.IO.File]::WriteAllText("appsettings.json", $content, [System.Text.Encoding]::UTF8)
 
       - name: 의존성 복원

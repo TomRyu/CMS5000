@@ -47,7 +47,7 @@ public class MainViewModel : ViewModelBase
     private bool _isLoginBusy;
     private string _updateStatus = "";
     private bool _isDbConnected;
-    private string _connectionStatusText = "CMS-5000 Connecting...";
+    private string _connectionStatusText = $"[DB]{PostgresService.CurrentDatabase} Connecting...";
     private string _windowTitle = "CMS-5000 | ㈜오토시스";
     private bool _saveUsername;
     private bool _savePassword;
@@ -136,6 +136,7 @@ public class MainViewModel : ViewModelBase
             if (dlg.Connected)
             {
                 _ = CheckDbConnectionAsync();   // 즉시 LED 갱신
+                _ = DeviceConfigVM.ReloadForDbChangeAsync();   // DB 변경 시 STATION/RACK/TRAIN 재로드
                 AppLogService.Info("연결", $"DB 연결(수동): {PostgresService.CurrentDatabase}");
             }
         });
@@ -183,18 +184,21 @@ public class MainViewModel : ViewModelBase
     /// <summary>DB 도달 여부를 점검해 하단 상태바 LED·텍스트를 갱신한다.</summary>
     private async Task CheckDbConnectionAsync()
     {
+        // 하단 상태바는 Connection > Database Connect 다이얼로그의 Database 필드(PostgresService.CurrentDatabase)와
+        // 정확히 동일한 이름을 "[DB]{이름}" 형식으로 표시한다.
+        string db = $"[DB]{PostgresService.CurrentDatabase}";
         try
         {
             await PostgresService.EnsureReachableAsync();
             IsDbConnected = true;
-            ConnectionStatusText = "CMS-5000 Connection OK.";
+            ConnectionStatusText = $"{db} Connection OK.";
         }
         catch
         {
             IsDbConnected = false;
             ConnectionStatusText = PostgresService.IsManuallyDisconnected
-                ? "CMS-5000 Disconnected."
-                : "CMS-5000 Connection FAIL.";
+                ? $"{db} Disconnected."
+                : $"{db} Connection FAIL.";
         }
     }
 

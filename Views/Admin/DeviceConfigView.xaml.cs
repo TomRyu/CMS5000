@@ -1,8 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using CMS5000.Models;
+using CMS5000.Services;
 using CMS5000.ViewModels.Admin;
 
 namespace CMS5000.Views.Admin;
@@ -15,8 +17,26 @@ public partial class DeviceConfigView : UserControl
         Loaded += OnLoaded;
     }
 
+    private bool   _leftCollapsed;
+    private bool   _leftRestored;
+    private double _expandWidth = 280;
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        // 마지막으로 조정한 좌측 패널 폭/접힘 상태 복원 (최초 1회)
+        if (!_leftRestored)
+        {
+            _leftRestored = true;
+            var saved = LocalSettingsService.Current.DevicePanelWidth;
+            if (saved is double w && w >= LeftPanelColumn.MinWidth && w <= LeftPanelColumn.MaxWidth)
+            {
+                _expandWidth = w;
+                LeftPanelColumn.Width = new GridLength(w);
+            }
+            if (LocalSettingsService.Current.DevicePanelCollapsed)
+                ApplyLeftCollapsed(true, save: false);
+        }
+
         if (DataContext is not DeviceConfigViewModel vm) return;
         vm.InsertStationRequested  += OnInsertStation;
         vm.ModifyStationRequested  += OnModifyStation;
@@ -94,6 +114,51 @@ public partial class DeviceConfigView : UserControl
 
         if (dlg.Modified)
             _ = vm.RefreshRackViewAsync();
+    }
+
+    // ── 좌측 패널 폭 조절 저장 ────────────────────────────────
+
+    private void LeftPanelSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
+    {
+        double w = LeftPanelColumn.ActualWidth;
+        if (w <= 0) return;
+        _expandWidth = w;
+        LocalSettingsService.Current.DevicePanelWidth = w;
+        LocalSettingsService.Save();
+    }
+
+    // ── 좌측 패널 접기 / 펼치기 ───────────────────────────────
+
+    private void ToggleLeftPanel_Click(object sender, RoutedEventArgs e)
+        => ApplyLeftCollapsed(!_leftCollapsed, save: true);
+
+    private void ApplyLeftCollapsed(bool collapsed, bool save)
+    {
+        if (collapsed)
+        {
+            // 현재 펼쳐진 폭 기억(접기 직전)
+            if (!_leftCollapsed && LeftPanelColumn.ActualWidth > 1)
+                _expandWidth = LeftPanelColumn.ActualWidth;
+            LeftPanelColumn.MinWidth = 0;
+            LeftPanelColumn.Width    = new GridLength(0);
+            LeftPanelGrid.Visibility     = Visibility.Collapsed;
+            LeftPanelSplitter.Visibility = Visibility.Collapsed;
+            LeftToggleIcon.Text = ((char)0xE76C).ToString(); // ChevronRight (expand)
+        }
+        else
+        {
+            LeftPanelColumn.MinWidth = 220;
+            LeftPanelColumn.Width    = new GridLength(_expandWidth >= 220 ? _expandWidth : 280);
+            LeftPanelGrid.Visibility     = Visibility.Visible;
+            LeftPanelSplitter.Visibility = Visibility.Visible;
+            LeftToggleIcon.Text = ((char)0xE76B).ToString(); // ChevronLeft (collapse)
+        }
+        _leftCollapsed = collapsed;
+        if (save)
+        {
+            LocalSettingsService.Current.DevicePanelCollapsed = collapsed;
+            LocalSettingsService.Save();
+        }
     }
 
     // ── 트리 선택 이벤트 ──────────────────────────────────────

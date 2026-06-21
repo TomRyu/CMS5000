@@ -807,6 +807,16 @@ public class DeviceConfigViewModel : ViewModelBase
         finally { IsBusy = false; }
     }
 
+    /// <summary>
+    /// DB 연결이 변경된 직후 호출: 이전 DB 기준 선택을 무효화하고
+    /// 새 DB의 STATION/RACK/TRAIN 을 처음부터 다시 로드한다.
+    /// </summary>
+    public async Task ReloadForDbChangeAsync()
+    {
+        _selectedStation = null;   // 이전 DB의 선택은 무효(스테이션ID가 같아도 다른 DB임)
+        await RefreshAsync();
+    }
+
     private async Task RefreshAsync()
     {
         StatusMessage = "";
@@ -1293,7 +1303,8 @@ public class DeviceConfigViewModel : ViewModelBase
         TrainEditKind     = node.Kind;
         IsTrainAddingNew  = false;
         SyncSelectedChannel(node.Kind == NodeKind.Point ? node.Assign : 0);
-        IsTrainEditing    = true;
+        // 탭이 열려 있으면 유지(노드 선택만으로 탭이 사라지지 않도록). RACK 과 동일 처리.
+        if (SelectedTypeTab == null) IsTrainEditing = true;
     }
 
     public void SelectTrainNode(DeviceTreeNode node) => SelectedTrainNode = node;

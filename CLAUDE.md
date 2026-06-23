@@ -33,6 +33,14 @@ dotnet run                 # 실행 (로그인 → 메뉴)
 - `Services/` — `PostgresService`(Npgsql 데이터소스·연결·스키마), `AuthService`(로그인·잠금), `UserService`/`LoginLogService`(`cms_users`/`cms_login_logs`), `UpdateService`(Velopack+GitHub), `ChangelogService`, `AppLogService`(앱 동작 로그) 등.
 - `Themes/` — `Colors.xaml`, `Styles.xaml`. 색/스타일은 항상 리소스 키 사용(`AccentBlueBrush`, `StatusGoodBrush`, `CardStyle`, `AccentButtonStyle` 등). 하드코딩 금지.
 
+## 비-admin 모니터링 화면 (Operator/Maintenance/Expert 공용)
+- 비-admin 3개 역할은 로그인 시 `MainViewModel` role switch에서 모두 **`MonitoringVM`(`Views/Monitoring/MonitoringView`)** 으로 라우팅된다(기존 OperatorMainView/ExpertMainView 등은 미사용으로 남음). admin은 종전대로.
+- 구성: 상단 헤더(접기 ☰ + 스테이션명) + 좌측 사이드바(GridSplitter 폭 조절·접기/펼치기) + 메인 탭 Status/Events/Plots/Case History. **라이트 테마**.
+- **좌측 트리**: Machines 탭=Train 트리, Devices 탭=Rack 트리 — admin과 동일한 `DeviceService.GetTrainNodesAsync`/`GetRackNodesAsync`(현재 연결 현장)로 로드. **로그인 시·DB 변경 시 `MonitoringVM.RefreshTreesAsync()`로 자동 갱신**(앱 시작 시 1회만 로드하면 연결 전이라 비어 보임).
+- **차트는 ScottPlot**: Status>Bar Graph=`Controls/MiniBarPlot`(단일 막대), Plots 탭=`Controls/MonitoringPlotView`(라이트 테마, PlotType 문자열로 12종 렌더). ScottPlot 5 API 패턴은 `Controls/ScottPlotSampleView.xaml.cs` 참고.
+- **데이터**: 트리만 실 DB, 그 외(Status 표·Bar·Overview, Events, Plots 수치)는 **샘플/합성**(추후 실 DB 연동 예정 = Phase 3).
+- 그리드 헤더 폰트 함정: 전역 암시적 `TextBlock`(FontSize 15)이 헤더 텍스트를 가로채 `FontSize` 세터가 안 먹음 → `ColumnHeaderStyle`의 `ContentTemplate`에 명시 `<TextBlock FontSize=…>` 사용.
+
 ## 핵심 주의사항
 - LightningChart 관련 코드와 패키지 참조는 제거됨. 다시 추가하지 말 것.
 - 차트 구현은 `Controls/ScottPlotSampleView.xaml(.cs)`에서 관리한다. Expert 화면은 `ScottPlotSampleView`를 바인딩해 사용한다.

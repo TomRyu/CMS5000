@@ -15,6 +15,8 @@
         xmlns:stVm="clr-namespace:CMS5000.ViewModels.Settings"
         xmlns:stView="clr-namespace:CMS5000.Views.Settings"
         xmlns:logView="clr-namespace:CMS5000.Views.Log"
+        xmlns:monVm="clr-namespace:CMS5000.ViewModels.Monitoring"
+        xmlns:monView="clr-namespace:CMS5000.Views.Monitoring"
         xmlns:models="clr-namespace:CMS5000.Models"
         Title="{Binding WindowTitle}"
         Icon="pack://application:,,,/CMS5000.ico"
@@ -45,6 +47,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type adVm:LogViewModel}">
             <logView:LogView DataContext="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type monVm:MonitoringViewModel}">
+            <monView:MonitoringView DataContext="{Binding}"/>
         </DataTemplate>
 
         <!-- NavNode status dot converter (inline style trigger) -->
@@ -93,18 +98,7 @@
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="72"/>   <!-- Col 0: Icon strip -->
-                <ColumnDefinition>               <!-- Col 1: Tree panel (collapsible) -->
-                    <ColumnDefinition.Style>
-                        <Style TargetType="ColumnDefinition">
-                            <Setter Property="Width" Value="220"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsTreePanelVisible}" Value="False">
-                                    <Setter Property="Width" Value="0"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ColumnDefinition.Style>
-                </ColumnDefinition>
+                <ColumnDefinition Width="0"/>    <!-- Col 1: (구) Database Name 트리 패널 제거됨 -->
                 <ColumnDefinition Width="*"/>    <!-- Col 2: Main content -->
             </Grid.ColumnDefinitions>
 
@@ -567,90 +561,7 @@
             <!-- ====================================================
                  COL 1 : TREE NAV PANEL (light)
                  ==================================================== -->
-            <Border Grid.Column="1" Background="{StaticResource TreePanelBgBrush}"
-                    BorderBrush="{StaticResource TreePanelBorderBrush}" BorderThickness="0,0,1,0"
-                    ClipToBounds="True">
-                <DockPanel>
-                    <!-- Panel Header -->
-                    <Border DockPanel.Dock="Top"
-                            Background="{StaticResource TreePanelHeaderBrush}"
-                            BorderBrush="{StaticResource TreePanelBorderBrush}"
-                            BorderThickness="0,0,0,1" Padding="10,8">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Database Name"
-                                       FontSize="11" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center"/>
-                            <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}"
-                                    Command="{Binding ToggleTreeCommand}"
-                                    Padding="4,2" BorderThickness="0" Background="Transparent"
-                                    ToolTip="패널 닫기">
-                                <TextBlock Text="◀" FontSize="10"
-                                           Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Search -->
-                    <Border DockPanel.Dock="Top" Padding="8,6"
-                            BorderBrush="{StaticResource TreePanelBorderBrush}" BorderThickness="0,0,0,1">
-                        <Border BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1"
-                                CornerRadius="4" Background="{StaticResource InputBgBrush}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="🔍" FontSize="11"
-                                           VerticalAlignment="Center" Margin="6,0,4,0"
-                                           Foreground="{StaticResource TextDisabledBrush}"/>
-                                <TextBox Grid.Column="1" BorderThickness="0" FontSize="12"
-                                         Background="Transparent" Padding="0,5,6,5"
-                                         Text="" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            </Grid>
-                        </Border>
-                    </Border>
-
-                    <!-- Tree View -->
-                    <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <TreeView ItemsSource="{Binding NavTree}" Margin="4,4">
-                            <TreeView.ItemTemplate>
-                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal" Margin="0,1">
-                                        <!-- Status dot -->
-                                        <Ellipse>
-                                            <Ellipse.Style>
-                                                <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDotStyle}">
-                                                    <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Warning">
-                                                            <Setter Property="Fill" Value="{StaticResource StatusWarningBrush}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Danger">
-                                                            <Setter Property="Fill" Value="{StaticResource StatusDangerBrush}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Offline">
-                                                            <Setter Property="Fill" Value="{StaticResource StatusOfflineBrush}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Ellipse.Style>
-                                        </Ellipse>
-                                        <TextBlock Text="{Binding Name}" FontSize="12"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </HierarchicalDataTemplate>
-                            </TreeView.ItemTemplate>
-                        </TreeView>
-                    </ScrollViewer>
-                </DockPanel>
-            </Border>
+            <!-- (구) COL 1 Database Name 트리 패널 — 제거됨 (비-admin은 MonitoringView 자체 트리 사용) -->
 
             <!-- ====================================================
                  COL 2 : MAIN CONTENT
@@ -672,15 +583,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Tree 토글 + CMS5000 로고 -->
-                        <Button Grid.Column="0" Style="{StaticResource FlatButtonStyle}"
-                                Command="{Binding ToggleTreeCommand}"
-                                BorderThickness="0" Background="Transparent"
-                                Padding="4" Margin="0,0,8,0" ToolTip="메뉴 토글">
-                            <TextBlock Text="☰" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- (구) Tree 토글 ☰ — 제거됨. CMS5000 로고 -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,0,0">
                             <TextBlock Text="⬡" FontSize="18" Foreground="{StaticResource AccentBlueBrush}"
                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock Text="CMS-" FontSize="17" FontWeight="Bold"

@@ -83,6 +83,8 @@ public class MainViewModel : ViewModelBase
     public OperatorViewModel      OperatorVM      { get; } = new();
     public MaintenanceViewModel   MaintenanceVM   { get; } = new();
     public ExpertViewModel        ExpertVM        { get; } = new();
+    // 비-admin 역할 공용 진동 모니터링 화면(Operator/Maintenance/Expert 동일 적용)
+    public Monitoring.MonitoringViewModel MonitoringVM { get; } = new();
     public AdminViewModel         AdminVM         { get; } = new();
     public DeviceConfigViewModel  DeviceConfigVM  { get; } = new();
     public SettingsViewModel      SettingsVM      { get; } = new();
@@ -137,6 +139,7 @@ public class MainViewModel : ViewModelBase
             {
                 _ = CheckDbConnectionAsync();   // 즉시 LED 갱신
                 _ = DeviceConfigVM.ReloadForDbChangeAsync();   // DB 변경 시 STATION/RACK/TRAIN 재로드
+                _ = MonitoringVM.RefreshTreesAsync();          // 모니터링 화면 트리도 갱신
                 AppLogService.Info("연결", $"DB 연결(수동): {PostgresService.CurrentDatabase}");
             }
         });
@@ -274,14 +277,18 @@ public class MainViewModel : ViewModelBase
         CurrentView = role switch
         {
             UserRole.Admin       => AdminVM,
-            UserRole.Operator    => OperatorVM,
-            UserRole.Maintenance => MaintenanceVM,
-            UserRole.Expert      => ExpertVM,
+            UserRole.Operator    => MonitoringVM,
+            UserRole.Maintenance => MonitoringVM,
+            UserRole.Expert      => MonitoringVM,
             _                    => null
         };
 
         ActiveNavIcon = role == UserRole.Admin ? "Admin" : "Dashboard";
-        IsTreePanelVisible = role != UserRole.Admin;
+        // 비-admin은 MonitoringView 자체 트리가 있으므로 기존 "Database Name" 트리 패널은 숨긴다.
+        IsTreePanelVisible = false;
+        // 비-admin 모니터링 화면: 로그인 시점(연결 보장)에 Train/Rack 트리를 다시 로드한다.
+        if (role != UserRole.Admin)
+            _ = MonitoringVM.RefreshTreesAsync();
         IsPasswordVisible = false;
         SettingsVM.LoadFromCurrentUser();
         SessionTimeoutService.ResetActivity();

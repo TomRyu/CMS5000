@@ -810,7 +810,45 @@
                     Background="{StaticResource HeaderBgBrush}"
                     BorderBrush="{StaticResource HeaderBorderBrush}" BorderThickness="0,1,0,0"
                     Height="24" Panel.ZIndex="20">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                <DockPanel VerticalAlignment="Center" Margin="12,0">
+                    <!-- 좌측 끝: 연결 토글 버튼 (모든 역할 접근) — 연결됨이면 '연결 해제', 끊김이면 '재연결'(다이얼로그) -->
+                    <Button DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,10,0"
+                            ToolTip="DB 연결 해제 / 재연결">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                <Setter Property="FontSize" Value="10"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Content" Value="재연결"/>
+                                <Setter Property="Command" Value="{Binding DbConnectCommand}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bd" Background="Transparent"
+                                                    BorderBrush="{StaticResource HeaderBorderBrush}" BorderThickness="1"
+                                                    CornerRadius="3" Padding="8,1">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBluePaleBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDbConnected}" Value="True">
+                                        <Setter Property="Content" Value="연결 해제"/>
+                                        <Setter Property="Command" Value="{Binding DbDisconnectCommand}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- 좌측: 연결 LED + 텍스트 -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- 연결 LED : 연결 시 녹색 깜빡임, 끊기면 회색 고정 -->
                     <Ellipse Width="9" Height="9" VerticalAlignment="Center"
                              ToolTip="{Binding ConnectionStatusText}">
@@ -841,7 +879,8 @@
                     <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11"
                                Foreground="{StaticResource TextSecondaryBrush}"
                                VerticalAlignment="Center" Margin="7,0,0,0"/>
-                </StackPanel>
+                    </StackPanel>
+                </DockPanel>
             </Border>
         </Grid>
     </Grid>

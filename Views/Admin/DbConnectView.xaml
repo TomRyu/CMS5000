@@ -53,10 +53,8 @@
         <TextBox   Grid.Row="0" Grid.Column="1" Style="{StaticResource Fld}"
                    Text="{Binding Server, UpdateSourceTrigger=PropertyChanged}"/>
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Database" Style="{StaticResource Lbl}"/>
-        <ComboBox  Grid.Row="2" Grid.Column="1" Style="{StaticResource Fld}"
-                   IsEditable="False"
-                   ItemsSource="{Binding Databases}"
-                   SelectedItem="{Binding Database, Mode=TwoWay}"/>
+        <TextBox   Grid.Row="2" Grid.Column="1" Style="{StaticResource Fld}"
+                   Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}"/>
         <TextBlock Grid.Row="4" Grid.Column="0" Text="User"     Style="{StaticResource Lbl}"/>
         <TextBox   Grid.Row="4" Grid.Column="1" Style="{StaticResource Fld}"
                    Text="{Binding User, UpdateSourceTrigger=PropertyChanged}"/>

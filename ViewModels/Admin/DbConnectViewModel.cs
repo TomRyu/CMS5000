@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using CMS5000.Services;
 using CMS5000.ViewModels.Base;
 
@@ -22,9 +21,6 @@ public class DbConnectViewModel : ViewModelBase
     public string Password { get => _password; set => SetProperty(ref _password, value); }
     public string Status   { get => _status;   set => SetProperty(ref _status, value); }
 
-    /// <summary>PostgreSQL 서버에서 조회한 데이터베이스 이름 목록(Database 콤보박스용).</summary>
-    public ObservableCollection<string> Databases { get; } = new();
-
     /// <summary>연결 성공 시 true.</summary>
     public bool Connected { get; private set; }
     public event Action? CloseRequested;
@@ -41,29 +37,6 @@ public class DbConnectViewModel : ViewModelBase
 
         OkCommand     = new RelayCommand(_ => _ = ConnectAsync());
         CancelCommand = new RelayCommand(_ => CloseRequested?.Invoke());
-
-        _ = LoadDatabasesAsync();
-    }
-
-    /// <summary>현재 서버의 DB 목록을 조회해 콤보박스를 채운다. 현재 DB는 목록에 포함되어 선택 유지된다.</summary>
-    private async Task LoadDatabasesAsync()
-    {
-        try
-        {
-            var names = await PostgresService.GetDatabaseNamesAsync();
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-            {
-                Databases.Clear();
-                foreach (var n in names) Databases.Add(n);
-                // 현재 접속 DB가 목록에 있으면 선택값으로 강제(콤보 SelectedItem 일치 보장)
-                if (Databases.Contains(_database))
-                    Database = _database;
-            });
-        }
-        catch
-        {
-            // 목록 조회 실패 시 콤보가 비어도 무방(연결 자체는 OK 버튼으로 시도 가능)
-        }
     }
 
     private async Task ConnectAsync()

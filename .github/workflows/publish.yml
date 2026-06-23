@@ -24,10 +24,12 @@ jobs:
       - name: Velopack CLI(vpk) 설치
         run: dotnet tool install -g vpk
 
-      - name: appsettings.json 생성 (Secrets → 파일)
-        # PostgreSQL 접속정보를 GitHub Secrets에서 주입. 소스/릴리스에 자격증명 비노출.
+      - name: appsettings.json 생성 (빈 템플릿 — 첫 실행 시 수동 입력)
+        # 릴리스에 DB 자격증명을 넣지 않는다. Host/Database/Password 를 비워 두면
+        # 첫 실행 시 접속 다이얼로그가 떠서 현장 담당자가 직접 입력하고,
+        # 입력값은 %APPDATA%\CMS5000\connection.json 에 저장되어 이후 자동 연결된다.
         run: |
-          $content = '{"PostgreSQL":{"Host":"${{ secrets.PG_HOST }}","Database":"${{ secrets.PG_DATABASE }}","Username":"${{ secrets.PG_USERNAME }}","Password":"${{ secrets.PG_PASSWORD }}"}}'
+          $content = '{"PostgreSQL":{"Host":"","Database":"","Username":"postgres","Password":""}}'
           [System.IO.File]::WriteAllText("appsettings.json", $content, [System.Text.Encoding]::UTF8)
 
       - name: 의존성 복원

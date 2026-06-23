@@ -58,8 +58,8 @@ class Program
             return false;
         }
 
-        // 최초 실행: 저장된 접속정보가 없으면 바로 접속 다이얼로그로 입력받는다.
-        if (!PostgresService.HasUserConfig)
+        // 사용 가능한 접속정보(appsettings.json 또는 connection.json)가 없으면 접속 다이얼로그로 입력받는다.
+        if (!PostgresService.IsConfigured)
         {
             if (!ShowConnectDialog())
                 return false;   // 사용자가 취소 → 종료

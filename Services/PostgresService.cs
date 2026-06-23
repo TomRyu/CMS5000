@@ -1,6 +1,4 @@
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Npgsql;
 
@@ -25,40 +23,10 @@ public static class PostgresService
                      "CMS5000", "connection.json");
 
     /// <summary>
-    /// 사용자 영구 접속정보(%APPDATA%\CMS5000\connection.json)가 존재하는지.
-    /// false 면 최초 실행으로 보고, 시작 시 접속 다이얼로그로 접속정보를 입력받는다.
+    /// 사용 가능한 접속정보로 데이터소스가 구성됐는지(appsettings.json 또는 connection.json 에서).
+    /// false 면 접속정보가 없는 것으로 보고 시작 시 접속 다이얼로그를 띄워 입력받는다.
     /// </summary>
-    public static bool HasUserConfig => File.Exists(UserConfigPath);
-
-    // connection.json 비밀번호 암호화 마커(Windows DPAPI, CurrentUser 범위).
-    private const string EncPrefix = "enc:v1:";
-    // 마지막으로 읽은 connection.json 의 비밀번호가 평문(레거시)이었으면 true → 시작 시 암호문으로 재저장.
-    private static bool _userPwWasPlaintext;
-
-    /// <summary>비밀번호를 DPAPI(CurrentUser)로 암호화해 "enc:v1:&lt;base64&gt;" 형태로 만든다.</summary>
-    private static string ProtectPassword(string plain)
-    {
-        if (string.IsNullOrEmpty(plain)) return plain;
-        try
-        {
-            var enc = ProtectedData.Protect(Encoding.UTF8.GetBytes(plain), null, DataProtectionScope.CurrentUser);
-            return EncPrefix + Convert.ToBase64String(enc);
-        }
-        catch { return plain; }   // 암호화 불가 시 평문 저장(최악의 경우에도 동작 보장)
-    }
-
-    /// <summary>"enc:v1:" 접두사가 있으면 복호화, 없으면 레거시 평문으로 간주. 복호화 실패 시 빈 문자열.</summary>
-    private static string UnprotectPassword(string stored)
-    {
-        if (string.IsNullOrEmpty(stored) || !stored.StartsWith(EncPrefix, StringComparison.Ordinal))
-            return stored;   // 레거시 평문
-        try
-        {
-            var data = Convert.FromBase64String(stored[EncPrefix.Length..]);
-            return Encoding.UTF8.GetString(ProtectedData.Unprotect(data, null, DataProtectionScope.CurrentUser));
-        }
-        catch { return ""; } // 다른 사용자/PC 등으로 복호화 실패 → 빈 값(재입력 유도)
-    }
+    public static bool IsConfigured => _ds != null;
 
     public static void Initialize()
     {
@@ -84,13 +52,6 @@ public static class PostgresService
         //    비어 있으면(최초 배포본) _ds 를 null 로 두고, 시작 시 다이얼로그 입력 후 ReconfigureAsync 가 생성한다.
         if (!string.IsNullOrWhiteSpace(host) && !string.IsNullOrWhiteSpace(db) && !string.IsNullOrWhiteSpace(user))
             _ds = BuildDataSource(host, db, user, pw);
-
-        // 4) 레거시 평문 connection.json 이면 암호문으로 1회 마이그레이션.
-        if (_userPwWasPlaintext && !string.IsNullOrEmpty(pw))
-        {
-            SaveConnection(host, db, user, pw);
-            _userPwWasPlaintext = false;
-        }
     }
 
     /// <summary>%APPDATA% 의 connection.json 이 있으면 접속정보를 읽어 덮어쓴다.</summary>
@@ -104,11 +65,7 @@ public static class PostgresService
             if (r.TryGetProperty("Host", out var h)     && h.GetString() is { Length: > 0 } hv) host = hv;
             if (r.TryGetProperty("Database", out var d) && d.GetString() is { Length: > 0 } dv) db   = dv;
             if (r.TryGetProperty("Username", out var u) && u.GetString() is { Length: > 0 } uv) user = uv;
-            if (r.TryGetProperty("Password", out var p) && p.GetString() is { } pv)
-            {
-                _userPwWasPlaintext = !pv.StartsWith(EncPrefix, StringComparison.Ordinal) && pv.Length > 0;
-                pw = UnprotectPassword(pv);
-            }
+            if (r.TryGetProperty("Password", out var p) && p.GetString() is { } pv) pw = pv;
         }
         catch { /* 손상 시 무시하고 기본값(appsettings) 사용 */ }
     }
@@ -176,7 +133,7 @@ public static class PostgresService
                 w.WriteString("Host", host);
                 w.WriteString("Database", db);
                 w.WriteString("Username", user);
-                w.WriteString("Password", ProtectPassword(pw));   // DPAPI 암호화 저장
+                w.WriteString("Password", pw);
                 w.WriteEndObject();
             }
             File.WriteAllBytes(path, ms.ToArray());

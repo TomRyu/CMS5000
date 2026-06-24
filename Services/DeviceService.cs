@@ -179,21 +179,31 @@ public static class DeviceService
     }
 
     /// <summary>
-    /// UpLoad(RACK FULL CONFIG)로 읽은 인벤토리/활성 상태를 DB에 반영(UPDATE 전용).
-    /// rack.activity/waveforminterval, module.activity/moduletype, general_channel.activity 만 갱신한다.
-    /// DB에 없는 모듈/채널은 INSERT 하지 않고 missing 으로 보고한다(센서/스케일/알람 등 상세값은 저장 안 함).
-    /// 활성: 기기 Active 가 0이 아니면 1(활성), 0이면 0(비활성)으로 매핑.
+    /// UpLoad(RACK FULL CONFIG)로 읽은 인벤토리/활성 상태를 DB에 반영(UPSERT).
+    /// rack.activity/waveforminterval 갱신 + module/general_channel 의 활성을 갱신하되,
+    /// DB에 없는 모듈/채널은 새로 INSERT 한다(앱의 모듈추가와 동일한 컬럼만 사용 — 활성·이름·채널인덱스).
+    /// moduletype/센서/스케일/알람 등 상세값은 건드리지 않는다(FK·상세 매핑 위험 회피).
+    /// 활성: 기기 Active 가 0이 아니면 1(활성), 0이면 0(비활성)으로 매핑. 채널 INSERT 시 channel_index 는 전역 MAX+1.
     /// </summary>
-    public static async Task<(bool rackUpdated, int modulesUpdated, int modulesMissing, int channelsUpdated, int channelsMissing)>
+    public static async Task<(bool rackUpdated, int modulesUpdated, int modulesInserted, int channelsUpdated, int channelsInserted)>
         SaveUploadedInventoryAsync(int stationId, int rackId, HwRackConfigParser.RackResult res)
     {
         bool rackUpdated = false;
-        int modUpd = 0, modMiss = 0, chUpd = 0, chMiss = 0;
+        int modUpd = 0, modIns = 0, chUpd = 0, chIns = 0;
 
         await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
         await using var tx   = await conn.BeginTransactionAsync();
         try
         {
+            // 채널 INSERT 용 전역 channel_index 시작값
+            int nextIdx;
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "SELECT COALESCE(MAX(channel_index)::int, 0) + 1 FROM public.general_channel";
+                nextIdx = (int)(await cmd.ExecuteScalarAsync())!;
+            }
+
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
@@ -207,36 +217,69 @@ public static class DeviceService
 
             foreach (var m in res.Modules)
             {
+                int act = m.Info.Active != 0 ? 1 : 0;
                 int n;
                 await using (var cmd = conn.CreateCommand())
                 {
                     cmd.Transaction = tx;
-                    cmd.CommandText = "UPDATE public.module SET activity=@a, moduletype=@t WHERE stationid=@sid AND rackid=@rid AND moduleid=@mid";
-                    cmd.Parameters.AddWithValue("a",   m.Info.Active != 0 ? 1 : 0);
-                    cmd.Parameters.AddWithValue("t",   (int)m.Info.Type);
+                    cmd.CommandText = "UPDATE public.module SET activity=@a WHERE stationid=@sid AND rackid=@rid AND moduleid=@mid";
+                    cmd.Parameters.AddWithValue("a",   act);
                     cmd.Parameters.AddWithValue("sid", stationId);
                     cmd.Parameters.AddWithValue("rid", rackId);
                     cmd.Parameters.AddWithValue("mid", (int)m.Info.Id);
                     n = await cmd.ExecuteNonQueryAsync();
                 }
-                if (n > 0) modUpd++; else { modMiss++; continue; }   // DB에 없는 모듈은 채널도 건너뜀
-
-                foreach (var ch in m.Channels)
+                if (n > 0) modUpd++;
+                else
                 {
                     await using var cmd = conn.CreateCommand();
                     cmd.Transaction = tx;
-                    cmd.CommandText = "UPDATE public.general_channel SET activity=@a WHERE stationid=@sid AND rackid=@rid AND moduleid=@mid AND channelid=@cid";
-                    cmd.Parameters.AddWithValue("a",   ch.Info.Active != 0 ? 1 : 0);
-                    cmd.Parameters.AddWithValue("sid", stationId);
-                    cmd.Parameters.AddWithValue("rid", rackId);
-                    cmd.Parameters.AddWithValue("mid", (int)m.Info.Id);
-                    cmd.Parameters.AddWithValue("cid", (int)ch.Info.Id);
-                    if (await cmd.ExecuteNonQueryAsync() > 0) chUpd++; else chMiss++;
+                    cmd.CommandText = "INSERT INTO public.module(stationid, rackid, moduleid, name, activity) VALUES(@sid, @rid, @mid, @name, @a)";
+                    cmd.Parameters.AddWithValue("sid",  stationId);
+                    cmd.Parameters.AddWithValue("rid",  rackId);
+                    cmd.Parameters.AddWithValue("mid",  (int)m.Info.Id);
+                    cmd.Parameters.AddWithValue("name", $"M{m.Info.Id:D2}");
+                    cmd.Parameters.AddWithValue("a",    act);
+                    await cmd.ExecuteNonQueryAsync();
+                    modIns++;
+                }
+
+                foreach (var ch in m.Channels)
+                {
+                    int cact = ch.Info.Active != 0 ? 1 : 0;
+                    int n2;
+                    await using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.Transaction = tx;
+                        cmd.CommandText = "UPDATE public.general_channel SET activity=@a WHERE stationid=@sid AND rackid=@rid AND moduleid=@mid AND channelid=@cid";
+                        cmd.Parameters.AddWithValue("a",   cact);
+                        cmd.Parameters.AddWithValue("sid", stationId);
+                        cmd.Parameters.AddWithValue("rid", rackId);
+                        cmd.Parameters.AddWithValue("mid", (int)m.Info.Id);
+                        cmd.Parameters.AddWithValue("cid", (int)ch.Info.Id);
+                        n2 = await cmd.ExecuteNonQueryAsync();
+                    }
+                    if (n2 > 0) chUpd++;
+                    else
+                    {
+                        await using var cmd = conn.CreateCommand();
+                        cmd.Transaction = tx;
+                        cmd.CommandText = "INSERT INTO public.general_channel(stationid, rackid, moduleid, channelid, channel_index, name, activity) VALUES(@sid, @rid, @mid, @cid, @cidx, @name, @a)";
+                        cmd.Parameters.AddWithValue("sid",  stationId);
+                        cmd.Parameters.AddWithValue("rid",  rackId);
+                        cmd.Parameters.AddWithValue("mid",  (int)m.Info.Id);
+                        cmd.Parameters.AddWithValue("cid",  (int)ch.Info.Id);
+                        cmd.Parameters.AddWithValue("cidx", nextIdx++);
+                        cmd.Parameters.AddWithValue("name", $"CH{ch.Info.Id:D2}");
+                        cmd.Parameters.AddWithValue("a",    cact);
+                        await cmd.ExecuteNonQueryAsync();
+                        chIns++;
+                    }
                 }
             }
 
             await tx.CommitAsync();
-            return (rackUpdated, modUpd, modMiss, chUpd, chMiss);
+            return (rackUpdated, modUpd, modIns, chUpd, chIns);
         }
         catch
         {

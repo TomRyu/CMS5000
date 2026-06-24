@@ -306,20 +306,29 @@ public class HwConfigViewModel : ViewModelBase
         if (_lastUpload is not { } res) return;
         int modCnt = res.Modules.Count;
         int chCnt  = res.Modules.Sum(m => m.Channels.Count);
+        int devRackId = res.Rack.Id;   // 기기가 보고한 rack id
+
+        // 기기가 보고한 rack 과 현재 탭의 rack 이 다르면 경고(엉뚱한 rack에 생성/덮어쓰기 방지)
+        string mismatch = devRackId != _rack.RackId
+            ? $"\n\n⚠️ 기기는 rack {devRackId:D2}를 보고했는데 현재 탭은 rack {_rack.RackId:D2}입니다.\n" +
+              $"   대상이 맞는지 반드시 확인하세요(틀리면 엉뚱한 랙에 저장됩니다).\n"
+            : "";
 
         var confirm = MessageBox.Show(
             $"기기에서 읽은 구성을 현재 랙(R{_rack.RackId:D2}) DB에 저장합니다.\n\n" +
-            $"• 모듈 {modCnt}개 · 채널 {chCnt}개의 활성/타입 정보가 덮어쓰기됩니다.\n" +
-            $"• 센서/스케일/알람 등 상세값은 저장하지 않습니다.\n" +
-            $"• DB에 없는 모듈/채널은 건너뜁니다.\n\n진행할까요?",
+            $"• 모듈 {modCnt}개 · 채널 {chCnt}개의 활성 상태를 저장합니다.\n" +
+            $"• DB에 없는 모듈/채널은 새로 생성(INSERT)됩니다.\n" +
+            $"• 센서/스케일/알람·모듈타입 등 상세값은 저장하지 않습니다." +
+            mismatch +
+            $"\n진행할까요?",
             "DB 저장 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         try
         {
-            var (rackUpd, mu, mm, cu, cm) = await DeviceService.SaveUploadedInventoryAsync(_rack.StationId, _rack.RackId, res);
-            AddLog($"DB 저장 완료: 랙 {(rackUpd ? "갱신" : "미일치")}, 모듈 {mu}개, 채널 {cu}개 갱신" +
-                   (mm + cm > 0 ? $" (DB에 없어 건너뜀: 모듈 {mm}, 채널 {cm})" : ""));
+            var (rackUpd, mu, mi, cu, ci) = await DeviceService.SaveUploadedInventoryAsync(_rack.StationId, _rack.RackId, res);
+            AddLog($"DB 저장 완료: 랙 {(rackUpd ? "갱신" : "미일치")}, " +
+                   $"모듈 갱신 {mu}/신규 {mi}, 채널 갱신 {cu}/신규 {ci}");
             InventorySaved?.Invoke();   // 왼쪽 메인 트리 새로고침
         }
         catch (Exception ex)

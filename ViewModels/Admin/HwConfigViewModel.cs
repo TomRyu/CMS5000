@@ -75,6 +75,9 @@ public class HwConfigViewModel : ViewModelBase
     public ObservableCollection<HwTreeNode> Nodes { get; } = [];
     public ObservableCollection<string>     Log   { get; } = [];
 
+    /// <summary>로그 전체를 한 문자열로(읽기전용 TextBox 바인딩 — 블럭 선택·복사용).</summary>
+    public string LogText => string.Join(Environment.NewLine, Log);
+
     private string _ip;
     private string _port;
     private bool   _connected;
@@ -105,6 +108,8 @@ public class HwConfigViewModel : ViewModelBase
         _port = rackNode.LocalPort > 0 ? rackNode.LocalPort.ToString() : "3000";
 
         BuildTree(rackNode);
+
+        Log.CollectionChanged += (_, _) => OnPropertyChanged(nameof(LogText));
 
         _socket.Connected    += () => UI(() => { Connected = true;  State = $"{Ip} Completing the Connection."; AddLog(State); });
         _socket.Disconnected += () => UI(() => { Connected = false; State = $"{Ip} Terminate the connection Complete."; AddLog(State); });

@@ -85,7 +85,7 @@ public class HwConfigViewModel : ViewModelBase
 
     public string Ip        { get => _ip;        set => SetProperty(ref _ip, value); }
     public string Port      { get => _port;      set => SetProperty(ref _port, value); }
-    public bool   Connected { get => _connected; set { SetProperty(ref _connected, value); OnPropertyChanged(nameof(Disconnected)); } }
+    public bool   Connected { get => _connected; set { SetProperty(ref _connected, value); OnPropertyChanged(nameof(Disconnected)); System.Windows.Input.CommandManager.InvalidateRequerySuggested(); } }
     public bool   Disconnected => !_connected;
     public string State     { get => _state;     set => SetProperty(ref _state, value); }
 
@@ -164,6 +164,17 @@ public class HwConfigViewModel : ViewModelBase
     // 원본 SyncListUp + ActorConfigSender: 체크된 노드에 포팅 구조체(byte 단위) CONFIG 패킷 전송
     private async Task DownloadAsync()
     {
+        // 선택 항목이 없으면 확인창 없이 안내만(체크 후 다시 누르도록)
+        int checkedCount = Flatten(Nodes).Count(n => n.IsChecked);
+        if (checkedCount == 0) { AddLog("선택된 항목이 없습니다. 전송할 항목을 체크하세요."); return; }
+
+        var confirm = MessageBox.Show(
+            $"체크한 {checkedCount}개 항목의 구성을 기기({Ip})로 전송(DownLoad)합니다.\n" +
+            $"기기의 설정이 변경됩니다.\n\n진행할까요?",
+            "DownLoad 확인 (DB → Rack)", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+            MessageBoxResult.No);   // 디폴트 = No
+        if (confirm != MessageBoxResult.Yes) return;
+
         try
         {
             int sent = 0;
@@ -210,6 +221,13 @@ public class HwConfigViewModel : ViewModelBase
 
     private void Upload()
     {
+        var confirm = MessageBox.Show(
+            $"기기({Ip})의 현재 구성을 읽어옵니다(UpLoad).\n" +
+            $"RACK LIST가 기기 값으로 갱신됩니다.\n\n진행할까요?",
+            "UpLoad 확인 (Rack → DB)", MessageBoxButton.YesNo, MessageBoxImage.Question,
+            MessageBoxResult.No);   // 디폴트 = No
+        if (confirm != MessageBoxResult.Yes) return;
+
         ShowCheckBoxes = false;   // UpLoad(기기→PC 읽기)는 선택이 필요 없으므로 체크박스 숨김
 
         // 기존 기기 응답 표시 초기화(이번 UpLoad 결과로 다시 채움)

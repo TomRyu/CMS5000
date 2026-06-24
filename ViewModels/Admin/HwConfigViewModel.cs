@@ -213,23 +213,83 @@ public class HwConfigViewModel : ViewModelBase
         AddLog($"수신: {pk.CommandText} {TypeText(pk.Type)} (Len {pk.Length})");
         if (LogRawHex) AddLog($"  raw[{rawFrame.Length}]: {ToHex(rawFrame)}");
 
-        if (pk.Command != HwPacket.CMD_CFG) return;   // ACK/NAK/요청에코 등은 로그만
-
         try
         {
-            switch (pk.Type)
+            // 실기기는 UpLoad(Config Request)에 대해 ACK + RACK FULL CONFIG 통짜 payload로 응답한다.
+            if (pk.Command == HwPacket.CMD_ACK && pk.ReturnType == HwPacket.TYP_RACK_CFG)
             {
-                case HwPacket.TYP_COMM_CFG:    ApplyComm(pk, payload);    break;  // 0x01
-                case HwPacket.TYP_RACK_CFG:    ApplyRack(pk, payload);    break;  // 0x02
-                case HwPacket.TYP_MODULE_CFG:  ApplyModule(pk, payload);  break;  // 0x22
-                case HwPacket.TYP_CHANNEL_CFG: ApplyChannel(pk, payload); break;  // 0x32
-                default: break;                                                   // 미지원 타입은 로그만
+                ApplyRackConfig(payload);
+                return;
+            }
+
+            // (참고) 모듈/채널 단위 CFG 응답이 오는 경우 처리.
+            if (pk.Command == HwPacket.CMD_CFG)
+            {
+                switch (pk.Type)
+                {
+                    case HwPacket.TYP_COMM_CFG:    ApplyComm(pk, payload);    break;  // 0x01
+                    case HwPacket.TYP_RACK_CFG:    ApplyRack(pk, payload);    break;  // 0x02
+                    case HwPacket.TYP_MODULE_CFG:  ApplyModule(pk, payload);  break;  // 0x22
+                    case HwPacket.TYP_CHANNEL_CFG: ApplyChannel(pk, payload); break;  // 0x32
+                    default: break;
+                }
             }
         }
         catch (Exception ex)
         {
-            AddLog($"[오류] 응답 파싱 실패({TypeText(pk.Type)}): {ex.Message}");
+            AddLog($"[오류] 응답 파싱 실패: {ex.Message}");
         }
+    }
+
+    // RACK FULL CONFIG 응답(ACK + 통짜 payload)을 파싱해 모듈/채널 전체를 트리에 반영.
+    private void ApplyRackConfig(byte[] payload)
+    {
+        var res = HwRackConfigParser.Parse(payload);
+        if (!res.Exact)
+            AddLog($"  · [경고] 레이아웃 불일치(소비 {res.Consumed}/{payload.Length}B) — 채널 값 신뢰 불가");
+
+        var rackNode = Nodes.FirstOrDefault();
+        if (rackNode != null)
+        {
+            rackNode.FromDevice = true;
+            rackNode.DeviceInfo = $"{ActiveText(res.Rack.Active)}, Modules {res.Modules.Count}, WfInterval {res.Rack.WaveFormInterval}";
+        }
+
+        int chTotal = 0;
+        foreach (var m in res.Modules)
+        {
+            var modNode = FindModule(m.Info.Id);
+            if (modNode == null)
+            {
+                modNode = new HwTreeNode { Name = $"M{m.Info.Id:D2}  (기기)", Kind = NodeKind.Module,
+                                           StationId = _rack.StationId, RackId = _rack.RackId, ModuleId = m.Info.Id };
+                rackNode?.Children.Add(modNode);
+            }
+            modNode.FromDevice = true;
+            modNode.DeviceInfo = $"type{m.Info.Type}, {ActiveText(m.Info.Active)}, CH {m.ChannelCount}";
+
+            foreach (var ch in m.Channels)
+            {
+                chTotal++;
+                var chNode = FindChannel(m.Info.Id, ch.Info.Id);
+                if (chNode == null)
+                {
+                    chNode = new HwTreeNode { Name = $"CH{ch.Info.Id:D2}  (기기)", Kind = NodeKind.Channel,
+                                              StationId = _rack.StationId, RackId = _rack.RackId, ModuleId = m.Info.Id, ChannelId = ch.Info.Id };
+                    modNode.Children.Add(chNode);
+                }
+                chNode.FromDevice = true;
+                chNode.DeviceInfo = SummarizeChannel(ch);
+            }
+        }
+        AddLog($"  · 랙 구성 반영 완료: 모듈 {res.Modules.Count}, 채널 {chTotal}");
+    }
+
+    private static string SummarizeChannel(HwRackConfigParser.ChannelResult ch)
+    {
+        var io = ch.Io; var s = io.Sensor;
+        return $"{ActiveText(ch.Info.Active)}, Sensor t{s.Type} sens{s.Sensitivity:0.###}, " +
+               $"Orient {io.Orientation}/{io.OrientationAngle}°, FreqSpan {io.FreqSpan}, Zero {io.ZeroPosition:0.###}";
     }
 
     private void ApplyComm(HwPacket pk, byte[] payload)

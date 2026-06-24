@@ -2979,6 +2979,8 @@ public class DeviceConfigViewModel : ViewModelBase
             System.Windows.MessageBoxImage.Warning,
             System.Windows.MessageBoxResult.No);   // 디폴트 버튼 = No(실수 방지)
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        // 중요사항 실행 비밀번호 확인
+        if (!await CMS5000.Views.Admin.PasswordDialog.EnsureCriticalAuthAsync(System.Windows.Application.Current?.MainWindow)) return;
 
         try
         {

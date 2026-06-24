@@ -55,6 +55,41 @@ public class SettingsViewModel : ViewModelBase
         return success;
     }
 
+    // ── 중요사항 실행 비밀번호 (admin 전용) ──────────
+    public bool IsAdmin => AuthService.CurrentUser?.Role == "Admin";
+
+    private string _criticalPwStatus = "";
+    public string CriticalPwStatus { get => _criticalPwStatus; set { SetProperty(ref _criticalPwStatus, value); OnPropertyChanged(nameof(HasCriticalPwStatus)); } }
+    public bool   HasCriticalPwStatus => !string.IsNullOrEmpty(_criticalPwStatus);
+
+    private string _criticalPwState = "확인 중...";
+    public string CriticalPwState { get => _criticalPwState; set => SetProperty(ref _criticalPwState, value); }
+
+    public RelayCommand SetCriticalPwCommand { get; }
+
+    private async void SetCriticalPassword()
+    {
+        var dlg = new CMS5000.Views.Admin.PasswordDialog(true,
+            "중요사항 실행 비밀번호 설정/변경",
+            "DownLoad/UpLoad 등 중요사항 실행 시 확인할 비밀번호를 설정합니다.")
+        { Owner = System.Windows.Application.Current?.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            await SecurityService.SetAsync(dlg.Password);
+            CriticalPwStatus = "중요사항 실행 비밀번호가 저장되었습니다.";
+            AppLogService.Success("설정", "중요사항 실행 비밀번호 변경", AuthService.CurrentUser?.DisplayName);
+            await RefreshCriticalPwStateAsync();
+        }
+        catch (Exception ex) { CriticalPwStatus = $"저장 실패: {ex.Message}"; }
+    }
+
+    public async Task RefreshCriticalPwStateAsync()
+    {
+        try { CriticalPwState = await SecurityService.IsSetAsync() ? "설정됨" : "미설정"; }
+        catch { CriticalPwState = "확인 불가"; }
+    }
+
     // ── 세션 타임아웃 ──────────────────────────────
     public record TimeoutOption(int Value, string Label);
 
@@ -97,6 +132,7 @@ public class SettingsViewModel : ViewModelBase
         });
 
         CheckUpdateCommand = new RelayCommand(_ => _ = CheckUpdateAsync());
+        SetCriticalPwCommand = new RelayCommand(_ => SetCriticalPassword());
     }
 
     private async Task CheckUpdateAsync()
@@ -133,6 +169,8 @@ public class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(Username));
         OnPropertyChanged(nameof(RoleName));
+        OnPropertyChanged(nameof(IsAdmin));
+        _ = RefreshCriticalPwStateAsync();
 
         var preset = FontSizeManager.Current;
         _fontSizePreset = preset;

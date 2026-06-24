@@ -8,6 +8,7 @@ using CMS5000.Models;
 using CMS5000.Services;
 using CMS5000.Services.Hw;
 using CMS5000.ViewModels.Base;
+using CMS5000.Views.Admin;
 
 namespace CMS5000.ViewModels.Admin;
 
@@ -133,7 +134,7 @@ public class HwConfigViewModel : ViewModelBase
         DisconnectCommand = new RelayCommand(_ => _socket.Disconnect(), _ => Connected);
         ToggleConnectionCommand = new RelayCommand(_ => { if (Connected) _socket.Disconnect(); else Connect(); });
         DownloadCommand   = new RelayCommand(_ => { ShowCheckBoxes = true; _ = DownloadAsync(); }, _ => Connected);
-        UploadCommand     = new RelayCommand(_ => Upload(),     _ => Connected);
+        UploadCommand     = new RelayCommand(_ => _ = UploadAsync(), _ => Connected);
         ClearCommand      = new RelayCommand(_ => Log.Clear());
         SaveLogCommand    = new RelayCommand(_ => SaveLog(), _ => Log.Count > 0);
         SaveToDbCommand   = new RelayCommand(_ => SaveToDb(), _ => _lastUpload != null);
@@ -174,6 +175,7 @@ public class HwConfigViewModel : ViewModelBase
             "DownLoad 확인 (DB → Rack)", MessageBoxButton.YesNo, MessageBoxImage.Warning,
             MessageBoxResult.No);   // 디폴트 = No
         if (confirm != MessageBoxResult.Yes) return;
+        if (!await CriticalAuthAsync()) return;   // 중요사항 실행 비밀번호 확인
 
         try
         {
@@ -219,7 +221,7 @@ public class HwConfigViewModel : ViewModelBase
         }
     }
 
-    private void Upload()
+    private async Task UploadAsync()
     {
         var confirm = MessageBox.Show(
             $"기기({Ip})의 현재 구성을 읽어옵니다(UpLoad).\n" +
@@ -227,6 +229,7 @@ public class HwConfigViewModel : ViewModelBase
             "UpLoad 확인 (Rack → DB)", MessageBoxButton.YesNo, MessageBoxImage.Question,
             MessageBoxResult.No);   // 디폴트 = No
         if (confirm != MessageBoxResult.Yes) return;
+        if (!await CriticalAuthAsync()) return;   // 중요사항 실행 비밀번호 확인
 
         ShowCheckBoxes = false;   // UpLoad(기기→PC 읽기)는 선택이 필요 없으므로 체크박스 숨김
 
@@ -485,6 +488,53 @@ public class HwConfigViewModel : ViewModelBase
         HwPacket.TYP_CHANNEL_CFG  => "CHANNEL",   // 0x32
         _ => $"0x{t:X2}",
     };
+
+    // 중요사항(DownLoad/UpLoad) 실행 전 비밀번호 검증. 최초 미설정이면 설정받음. 통과 시 true.
+    private async Task<bool> CriticalAuthAsync()
+    {
+        bool isSet;
+        try { isSet = await SecurityService.IsSetAsync(); }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"비밀번호 설정 확인 실패: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+
+        var owner = Application.Current?.MainWindow;
+
+        if (!isSet)
+        {
+            // 최초 1회: 비밀번호 설정
+            var dlg = new PasswordDialog(true, "중요사항 실행 비밀번호 설정 (최초 1회)",
+                "DownLoad/UpLoad 등 중요사항 실행에 사용할 비밀번호를 설정하세요. 이후 실행 시마다 입력이 필요합니다.")
+            { Owner = owner };
+            if (dlg.ShowDialog() != true) return false;
+            try { await SecurityService.SetAsync(dlg.Password); AddLog("중요사항 실행 비밀번호가 설정되었습니다."); return true; }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"비밀번호 저장 실패: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        // 이미 설정됨: 검증
+        var verify = new PasswordDialog(false, "비밀번호 확인", "중요사항 실행 비밀번호를 입력하세요.") { Owner = owner };
+        if (verify.ShowDialog() != true) return false;
+        bool ok;
+        try { ok = await SecurityService.VerifyAsync(verify.Password); }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"비밀번호 확인 실패: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+        if (!ok)
+        {
+            MessageBox.Show("비밀번호가 일치하지 않습니다.", "확인 실패", MessageBoxButton.OK, MessageBoxImage.Error);
+            AddLog("[오류] 중요사항 실행 비밀번호 불일치 — 취소됨");
+            return false;
+        }
+        return true;
+    }
 
     private static IEnumerable<HwTreeNode> Flatten(IEnumerable<HwTreeNode> nodes)
     {

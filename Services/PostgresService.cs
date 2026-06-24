@@ -287,6 +287,12 @@ public static class PostgresService
                 alertdanger smallint DEFAULT 0,
                 andorend   smallint DEFAULT 0,
                 PRIMARY KEY (relayidx, sequence));
+
+            -- 앱 전역 설정 키-값(중요사항 실행 비밀번호 해시 등). DB 공유.
+            CREATE TABLE IF NOT EXISTS public.cms_app_settings (
+                key   text PRIMARY KEY,
+                value text,
+                updated_at timestamp DEFAULT now());
             """;
 
         await using var conn = await DataSource.OpenConnectionAsync();

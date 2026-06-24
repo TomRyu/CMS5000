@@ -300,6 +300,32 @@
                 </StackPanel>
             </Border>
 
+            <!-- 중요사항 실행 비밀번호 카드 (admin 전용) -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0"
+                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="중요사항 실행 비밀번호" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="DownLoad/UpLoad 등 중요사항 실행 시 확인하는 비밀번호입니다. (DB에 공유 저장)"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="12" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="현재 상태:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding CriticalPwState}" Margin="6,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="비밀번호 설정 / 변경"
+                                Command="{Binding SetCriticalPwCommand}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Padding="14,8" Cursor="Hand"/>
+                        <TextBlock Text="{Binding CriticalPwStatus}" VerticalAlignment="Center"
+                                   Margin="14,0,0,0" TextWrapping="Wrap" MaxWidth="320"
+                                   Foreground="{StaticResource StatusGoodBrush}"
+                                   Visibility="{Binding HasCriticalPwStatus, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- 프로그램 정보 / 버전 이력 카드 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>

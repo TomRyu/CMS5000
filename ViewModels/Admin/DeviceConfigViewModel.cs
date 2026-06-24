@@ -1889,6 +1889,7 @@ public class DeviceConfigViewModel : ViewModelBase
         if (!_hwConfigData.TryGetValue(rackNode.RackId, out var vm))
         {
             vm = new HwConfigViewModel(rackNode);
+            vm.InventorySaved += () => _ = LoadTreesAsync();   // UpLoad→DB 저장 후 왼쪽 트리 갱신
             _hwConfigData[rackNode.RackId] = vm;
         }
         HwConfigVM = vm;

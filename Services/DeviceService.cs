@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CMS5000.Models;
+using CMS5000.Services.Hw;
 using Npgsql;
 
 namespace CMS5000.Services;
@@ -175,6 +176,73 @@ public static class DeviceService
         }
 
         return [.. rackMap.Values.OrderBy(n => n.RackId)];
+    }
+
+    /// <summary>
+    /// UpLoad(RACK FULL CONFIG)로 읽은 인벤토리/활성 상태를 DB에 반영(UPDATE 전용).
+    /// rack.activity/waveforminterval, module.activity/moduletype, general_channel.activity 만 갱신한다.
+    /// DB에 없는 모듈/채널은 INSERT 하지 않고 missing 으로 보고한다(센서/스케일/알람 등 상세값은 저장 안 함).
+    /// 활성: 기기 Active 가 0이 아니면 1(활성), 0이면 0(비활성)으로 매핑.
+    /// </summary>
+    public static async Task<(bool rackUpdated, int modulesUpdated, int modulesMissing, int channelsUpdated, int channelsMissing)>
+        SaveUploadedInventoryAsync(int stationId, int rackId, HwRackConfigParser.RackResult res)
+    {
+        bool rackUpdated = false;
+        int modUpd = 0, modMiss = 0, chUpd = 0, chMiss = 0;
+
+        await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
+        await using var tx   = await conn.BeginTransactionAsync();
+        try
+        {
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "UPDATE public.rack SET activity=@a, waveforminterval=@wf WHERE stationid=@sid AND rackid=@rid";
+                cmd.Parameters.AddWithValue("a",   res.Rack.Active != 0 ? 1 : 0);
+                cmd.Parameters.AddWithValue("wf",  (int)res.Rack.WaveFormInterval);
+                cmd.Parameters.AddWithValue("sid", stationId);
+                cmd.Parameters.AddWithValue("rid", rackId);
+                rackUpdated = await cmd.ExecuteNonQueryAsync() > 0;
+            }
+
+            foreach (var m in res.Modules)
+            {
+                int n;
+                await using (var cmd = conn.CreateCommand())
+                {
+                    cmd.Transaction = tx;
+                    cmd.CommandText = "UPDATE public.module SET activity=@a, moduletype=@t WHERE stationid=@sid AND rackid=@rid AND moduleid=@mid";
+                    cmd.Parameters.AddWithValue("a",   m.Info.Active != 0 ? 1 : 0);
+                    cmd.Parameters.AddWithValue("t",   (int)m.Info.Type);
+                    cmd.Parameters.AddWithValue("sid", stationId);
+                    cmd.Parameters.AddWithValue("rid", rackId);
+                    cmd.Parameters.AddWithValue("mid", (int)m.Info.Id);
+                    n = await cmd.ExecuteNonQueryAsync();
+                }
+                if (n > 0) modUpd++; else { modMiss++; continue; }   // DB에 없는 모듈은 채널도 건너뜀
+
+                foreach (var ch in m.Channels)
+                {
+                    await using var cmd = conn.CreateCommand();
+                    cmd.Transaction = tx;
+                    cmd.CommandText = "UPDATE public.general_channel SET activity=@a WHERE stationid=@sid AND rackid=@rid AND moduleid=@mid AND channelid=@cid";
+                    cmd.Parameters.AddWithValue("a",   ch.Info.Active != 0 ? 1 : 0);
+                    cmd.Parameters.AddWithValue("sid", stationId);
+                    cmd.Parameters.AddWithValue("rid", rackId);
+                    cmd.Parameters.AddWithValue("mid", (int)m.Info.Id);
+                    cmd.Parameters.AddWithValue("cid", (int)ch.Info.Id);
+                    if (await cmd.ExecuteNonQueryAsync() > 0) chUpd++; else chMiss++;
+                }
+            }
+
+            await tx.CommitAsync();
+            return (rackUpdated, modUpd, modMiss, chUpd, chMiss);
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
     }
 
     // ────────────────────────────────────────────────────────

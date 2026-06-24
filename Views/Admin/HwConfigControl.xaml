@@ -58,6 +58,7 @@
                 <Button Style="{StaticResource Tool}" Command="{Binding UploadCommand}"><TextBlock Text="UpLoad" FontSize="12"/></Button>
                 <Button Style="{StaticResource Tool}" Command="{Binding ClearCommand}"><TextBlock Text="Clear" FontSize="12"/></Button>
                 <Button Style="{StaticResource Tool}" Command="{Binding SaveLogCommand}"><TextBlock Text="Save Log" FontSize="12"/></Button>
+                <Button Style="{StaticResource Tool}" Command="{Binding SaveToDbCommand}"><TextBlock Text="DB 저장" FontSize="12"/></Button>
                 <CheckBox Content="raw hex" IsChecked="{Binding LogRawHex}" VerticalAlignment="Center" Margin="6,0,0,0" FontSize="12" Foreground="#333333"/>
             </StackPanel>
         </Border>

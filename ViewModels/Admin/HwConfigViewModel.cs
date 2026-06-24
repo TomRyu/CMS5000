@@ -95,6 +95,13 @@ public class HwConfigViewModel : ViewModelBase
     public RelayCommand UploadCommand     { get; }
     public RelayCommand ClearCommand      { get; }
     public RelayCommand SaveLogCommand    { get; }
+    public RelayCommand SaveToDbCommand   { get; }
+
+    /// <summary>마지막 UpLoad 파싱 결과(DB 저장용). 성공 시에만 채워짐.</summary>
+    private HwRackConfigParser.RackResult? _lastUpload;
+
+    /// <summary>인벤토리/활성을 DB에 저장한 직후 발생 — 왼쪽 메인 트리 갱신 트리거.</summary>
+    public event Action? InventorySaved;
 
     /// <summary>수신 패킷 원시 바이트를 hex 로그로 남길지(디버깅용). 기본 켜짐.</summary>
     private bool _logRawHex = true;
@@ -127,6 +134,7 @@ public class HwConfigViewModel : ViewModelBase
         UploadCommand     = new RelayCommand(_ => Upload(),     _ => Connected);
         ClearCommand      = new RelayCommand(_ => Log.Clear());
         SaveLogCommand    = new RelayCommand(_ => SaveLog(), _ => Log.Count > 0);
+        SaveToDbCommand   = new RelayCommand(_ => SaveToDb(), _ => _lastUpload != null);
     }
 
     private void BuildTree(DeviceTreeNode rack)
@@ -251,6 +259,7 @@ public class HwConfigViewModel : ViewModelBase
     private void ApplyRackConfig(byte[] payload)
     {
         var res = HwRackConfigParser.Parse(payload);
+        _lastUpload = res;   // DB 저장 버튼 활성화
         if (!res.Exact)
             AddLog($"  · [경고] 레이아웃 불일치(소비 {res.Consumed}/{payload.Length}B) — 채널 값 신뢰 불가");
 
@@ -289,6 +298,35 @@ public class HwConfigViewModel : ViewModelBase
             }
         }
         AddLog($"  · 랙 구성 반영 완료: 모듈 {res.Modules.Count}, 채널 {chTotal}");
+    }
+
+    // UpLoad로 읽은 인벤토리/활성을 현재 랙 DB에 저장(확인 후) → 왼쪽 메인 트리 갱신.
+    private async void SaveToDb()
+    {
+        if (_lastUpload is not { } res) return;
+        int modCnt = res.Modules.Count;
+        int chCnt  = res.Modules.Sum(m => m.Channels.Count);
+
+        var confirm = MessageBox.Show(
+            $"기기에서 읽은 구성을 현재 랙(R{_rack.RackId:D2}) DB에 저장합니다.\n\n" +
+            $"• 모듈 {modCnt}개 · 채널 {chCnt}개의 활성/타입 정보가 덮어쓰기됩니다.\n" +
+            $"• 센서/스케일/알람 등 상세값은 저장하지 않습니다.\n" +
+            $"• DB에 없는 모듈/채널은 건너뜁니다.\n\n진행할까요?",
+            "DB 저장 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            var (rackUpd, mu, mm, cu, cm) = await DeviceService.SaveUploadedInventoryAsync(_rack.StationId, _rack.RackId, res);
+            AddLog($"DB 저장 완료: 랙 {(rackUpd ? "갱신" : "미일치")}, 모듈 {mu}개, 채널 {cu}개 갱신" +
+                   (mm + cm > 0 ? $" (DB에 없어 건너뜀: 모듈 {mm}, 채널 {cm})" : ""));
+            InventorySaved?.Invoke();   // 왼쪽 메인 트리 새로고침
+        }
+        catch (Exception ex)
+        {
+            AddLog($"[오류] DB 저장 실패: {ex.Message}");
+            MessageBox.Show($"DB 저장 실패: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private static string SummarizeChannel(HwRackConfigParser.ChannelResult ch)

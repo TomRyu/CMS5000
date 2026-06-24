@@ -347,6 +347,7 @@ public class HwConfigViewModel : ViewModelBase
             "DB 저장 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning,
             MessageBoxResult.No);   // 디폴트 버튼 = No(실수 방지)
         if (confirm != MessageBoxResult.Yes) return;
+        if (!await CriticalAuthAsync()) return;   // 중요사항 실행 비밀번호 확인
 
         try
         {

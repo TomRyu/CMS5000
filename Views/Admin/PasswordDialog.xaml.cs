@@ -11,6 +11,7 @@ public partial class PasswordDialog : Window
 {
     private readonly bool _setMode;
     private const int MinLength = 4;
+    private bool _revealed;
 
     /// <summary>입력된 비밀번호(확인 클릭 시 유효).</summary>
     public string Password { get; private set; } = "";
@@ -25,15 +26,40 @@ public partial class PasswordDialog : Window
         Loaded += (_, _) => PwBox.Focus();
     }
 
+    // 현재 표시 모드에 따라 올바른 컨트롤에서 값을 읽는다.
+    private string CurrentPassword => _revealed ? PwText.Text : PwBox.Password;
+    private string CurrentConfirm  => _revealed ? PwConfirmText.Text : PwConfirmBox.Password;
+
+    private void ToggleReveal_Click(object sender, RoutedEventArgs e)
+    {
+        _revealed = !_revealed;
+        if (_revealed)
+        {
+            PwText.Text = PwBox.Password;
+            PwConfirmText.Text = PwConfirmBox.Password;
+            PwBox.Visibility = Visibility.Collapsed;        PwText.Visibility = Visibility.Visible;
+            PwConfirmBox.Visibility = Visibility.Collapsed; PwConfirmText.Visibility = Visibility.Visible;
+            EyeIcon.Opacity = 1.0;
+        }
+        else
+        {
+            PwBox.Password = PwText.Text;
+            PwConfirmBox.Password = PwConfirmText.Text;
+            PwBox.Visibility = Visibility.Visible;          PwText.Visibility = Visibility.Collapsed;
+            PwConfirmBox.Visibility = Visibility.Visible;   PwConfirmText.Visibility = Visibility.Collapsed;
+            EyeIcon.Opacity = 0.55;
+        }
+    }
+
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
-        string pw = PwBox.Password;
+        string pw = CurrentPassword;
         if (string.IsNullOrEmpty(pw)) { Fail("비밀번호를 입력하세요."); return; }
 
         if (_setMode)
         {
             if (pw.Length < MinLength) { Fail($"비밀번호는 {MinLength}자 이상이어야 합니다."); return; }
-            if (pw != PwConfirmBox.Password) { Fail("비밀번호 확인이 일치하지 않습니다."); return; }
+            if (pw != CurrentConfirm) { Fail("비밀번호 확인이 일치하지 않습니다."); return; }
         }
 
         Password = pw;
@@ -45,6 +71,7 @@ public partial class PasswordDialog : Window
     private void Fail(string msg)
     {
         StatusText.Text = msg;
-        (_setMode ? PwConfirmBox : PwBox).Focus();
+        if (_setMode) { if (_revealed) PwConfirmText.Focus(); else PwConfirmBox.Focus(); }
+        else          { if (_revealed) PwText.Focus();        else PwBox.Focus(); }
     }
 }

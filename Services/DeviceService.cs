@@ -257,14 +257,16 @@ public static class DeviceService
                     {
                         await using var cmd = conn.CreateCommand();
                         cmd.Transaction = tx;
-                        // channel_index 는 이 DB에서 GENERATED ALWAYS AS IDENTITY 이므로 직접 넣지 않는다(DB 자동 생성).
-                        cmd.CommandText = "INSERT INTO public.general_channel(stationid, rackid, moduleid, channelid, name, activity) VALUES(@sid, @rid, @mid, @cid, @name, @a)";
+                        // channel_index 는 GENERATED ALWAYS AS IDENTITY 이므로 직접 넣지 않는다(DB 자동 생성).
+                        // channeltype 은 NOT NULL 이라 기기 보고 채널타입값을 사용.
+                        cmd.CommandText = "INSERT INTO public.general_channel(stationid, rackid, moduleid, channelid, name, activity, channeltype) VALUES(@sid, @rid, @mid, @cid, @name, @a, @ct)";
                         cmd.Parameters.AddWithValue("sid",  stationId);
                         cmd.Parameters.AddWithValue("rid",  rackId);
                         cmd.Parameters.AddWithValue("mid",  (int)m.Info.Id);
                         cmd.Parameters.AddWithValue("cid",  (int)ch.Info.Id);
                         cmd.Parameters.AddWithValue("name", $"CH{ch.Info.Id:D2}");
                         cmd.Parameters.AddWithValue("a",    cact);
+                        cmd.Parameters.AddWithValue("ct",   (int)ch.Info.Type);
                         await cmd.ExecuteNonQueryAsync();
                         chIns++;
                     }

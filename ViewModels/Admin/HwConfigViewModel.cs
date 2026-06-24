@@ -91,6 +91,11 @@ public class HwConfigViewModel : ViewModelBase
     public RelayCommand DownloadCommand   { get; }
     public RelayCommand UploadCommand     { get; }
     public RelayCommand ClearCommand      { get; }
+    public RelayCommand SaveLogCommand    { get; }
+
+    /// <summary>수신 패킷 원시 바이트를 hex 로그로 남길지(디버깅용). 기본 켜짐.</summary>
+    private bool _logRawHex = true;
+    public bool LogRawHex { get => _logRawHex; set => SetProperty(ref _logRawHex, value); }
 
     public HwConfigViewModel(DeviceTreeNode rackNode)
     {
@@ -104,7 +109,7 @@ public class HwConfigViewModel : ViewModelBase
         _socket.Connected    += () => UI(() => { Connected = true;  State = $"{Ip} Completing the Connection."; AddLog(State); });
         _socket.Disconnected += () => UI(() => { Connected = false; State = $"{Ip} Terminate the connection Complete."; AddLog(State); });
         _socket.Sent         += n  => UI(() => AddLog($"{n} Bytes Transfer Completed."));
-        _socket.Received     += (pk, payload) => UI(() => OnReceived(pk, payload));
+        _socket.Received     += (pk, payload, raw) => UI(() => OnReceived(pk, payload, raw));
         _socket.Error        += m  => UI(() => AddLog($"[오류] {m}"));
 
         ConnectCommand    = new RelayCommand(_ => Connect(),    _ => !Connected);
@@ -112,6 +117,7 @@ public class HwConfigViewModel : ViewModelBase
         DownloadCommand   = new RelayCommand(_ => _ = DownloadAsync(), _ => Connected);
         UploadCommand     = new RelayCommand(_ => Upload(),     _ => Connected);
         ClearCommand      = new RelayCommand(_ => Log.Clear());
+        SaveLogCommand    = new RelayCommand(_ => SaveLog(), _ => Log.Count > 0);
     }
 
     private void BuildTree(DeviceTreeNode rack)
@@ -197,9 +203,10 @@ public class HwConfigViewModel : ViewModelBase
     // ── UpLoad 응답 수신 처리 (기기→PC). UI 스레드에서 호출됨. ──
     // 기기는 Config Request 에 대해 CMD_CFG 패킷(COMM/RACK/MODULE/CHANNEL)으로 응답하며,
     // 각 payload 를 송신과 동일한 구조체로 역직렬화해 RACK LIST 트리에 반영한다.
-    private void OnReceived(HwPacket pk, byte[] payload)
+    private void OnReceived(HwPacket pk, byte[] payload, byte[] rawFrame)
     {
         AddLog($"수신: {pk.CommandText} {TypeText(pk.Type)} (Len {pk.Length})");
+        if (LogRawHex) AddLog($"  raw[{rawFrame.Length}]: {ToHex(rawFrame)}");
 
         if (pk.Command != HwPacket.CMD_CFG) return;   // ACK/NAK/요청에코 등은 로그만
 
@@ -302,6 +309,31 @@ public class HwConfigViewModel : ViewModelBase
         int len = Array.IndexOf(b, (byte)0);
         if (len < 0) len = b.Length;
         return Encoding.ASCII.GetString(b, 0, len).Trim();
+    }
+
+    private static string ToHex(byte[] b) => BitConverter.ToString(b).Replace('-', ' ');
+
+    // COMMUNICATION STATE 로그를 텍스트 파일로 저장(디버깅용 — 실기기 응답 캡처).
+    private void SaveLog()
+    {
+        if (Log.Count == 0) { AddLog("저장할 로그가 없습니다."); return; }
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title    = "통신 로그 저장",
+            Filter   = "텍스트 파일 (*.txt)|*.txt|모든 파일 (*.*)|*.*",
+            FileName = $"HwConfig_R{_rack.RackId:D2}_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var header = $"# H/W CONFIG 통신 로그  RACK[{_rack.RackId:D2}]  {Ip}:{Port}  {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            System.IO.File.WriteAllLines(dlg.FileName, new[] { header }.Concat(Log), Encoding.UTF8);
+            AddLog($"로그 저장 완료: {dlg.FileName}");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"[오류] 로그 저장 실패: {ex.Message}");
+        }
     }
 
     private static string TypeText(byte t) => t switch

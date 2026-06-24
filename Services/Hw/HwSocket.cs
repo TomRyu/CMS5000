@@ -23,7 +23,8 @@ public sealed class HwSocket : IDisposable
     public event Action?            Connected;
     public event Action?            Disconnected;
     public event Action<int>?       Sent;
-    public event Action<HwPacket, byte[]>? Received;
+    /// <summary>수신 콜백: (파싱된 헤더, payload, 원시 프레임(헤더+payload) 바이트).</summary>
+    public event Action<HwPacket, byte[], byte[]>? Received;
     public event Action<string>?    Error;
 
     /// <summary>TCP 연결 시도 제한 시간(초). 닫힌/필터된 포트에서 OS 기본(~21초) 대기 대신 빠르게 실패.</summary>
@@ -107,7 +108,11 @@ public sealed class HwSocket : IDisposable
                     payload = new byte[pk.Length];
                     if (!await ReadExactAsync(payload, payload.Length, ct)) break;
                 }
-                Received?.Invoke(pk, payload);
+                // 원시 프레임(헤더+payload) — 디버깅용 hex 로그/검증에 사용
+                var frame = new byte[head.Length + payload.Length];
+                Array.Copy(head, 0, frame, 0, head.Length);
+                if (payload.Length > 0) Array.Copy(payload, 0, frame, head.Length, payload.Length);
+                Received?.Invoke(pk, payload, frame);
             }
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)

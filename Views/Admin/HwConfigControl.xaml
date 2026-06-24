@@ -84,12 +84,50 @@
                         </TextBlock>
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource Tool}" Command="{Binding DownloadCommand}"><TextBlock Text="DownLoad" FontSize="12"/></Button>
-                <Button Style="{StaticResource Tool}" Command="{Binding UploadCommand}"><TextBlock Text="UpLoad" FontSize="12"/></Button>
-                <Button Style="{StaticResource Tool}" Command="{Binding ClearCommand}"><TextBlock Text="Clear" FontSize="12"/></Button>
-                <Button Style="{StaticResource Tool}" Command="{Binding SaveLogCommand}"><TextBlock Text="Save Log" FontSize="12"/></Button>
-                <Button Style="{StaticResource Tool}" Command="{Binding SaveToDbCommand}"><TextBlock Text="DB 저장" FontSize="12"/></Button>
-                <CheckBox Content="raw hex" IsChecked="{Binding LogRawHex}" VerticalAlignment="Center" Margin="6,0,0,0" FontSize="12" Foreground="#333333"/>
+                <Rectangle Width="1" Fill="#D0D0D0" Margin="12,2"/>
+
+                <!-- ── DB → Rack (PC 설정을 기기로 내려보내기) ── -->
+                <TextBlock Text="DB→Rack" Style="{StaticResource Lbl}" Foreground="#C2660C" FontWeight="SemiBold" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource Tool}" Command="{Binding DownloadCommand}" ToolTip="설정한 Rack 구성을 기기로 전송(쓰기)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#C2660C" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="DownLoad" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- ── 강조 구분선: DownLoad ↔ UpLoad 혼동 방지 ── -->
+                <Rectangle Width="2" Fill="#9AA7BD" Margin="14,0"/>
+
+                <!-- ── Rack → DB (기기 설정을 읽어 DB에 저장) ── -->
+                <TextBlock Text="Rack→DB" Style="{StaticResource Lbl}" Foreground="#1D4ED8" FontWeight="SemiBold" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource Tool}" Command="{Binding UploadCommand}" ToolTip="기기의 현재 구성을 읽어오기(읽기)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#1D4ED8" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="UpLoad" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource Tool}" Command="{Binding SaveToDbCommand}" ToolTip="UpLoad한 구성을 DB에 저장">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#1D4ED8" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="DB 저장" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- ── 유틸 ── -->
+                <Rectangle Width="1" Fill="#D0D0D0" Margin="12,2"/>
+                <Button Style="{StaticResource Tool}" Command="{Binding ClearCommand}" ToolTip="통신 로그 지우기">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#555555" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Clear" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource Tool}" Command="{Binding SaveLogCommand}" ToolTip="통신 로그를 텍스트 파일로 저장">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7C3;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#555555" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Save Log" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <CheckBox Content="raw hex" IsChecked="{Binding LogRawHex}" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12" Foreground="#333333"/>
             </StackPanel>
         </Border>
 

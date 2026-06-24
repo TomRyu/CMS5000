@@ -195,15 +195,6 @@ public static class DeviceService
         await using var tx   = await conn.BeginTransactionAsync();
         try
         {
-            // 채널 INSERT 용 전역 channel_index 시작값
-            int nextIdx;
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = "SELECT COALESCE(MAX(channel_index)::int, 0) + 1 FROM public.general_channel";
-                nextIdx = (int)(await cmd.ExecuteScalarAsync())!;
-            }
-
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
@@ -266,12 +257,12 @@ public static class DeviceService
                     {
                         await using var cmd = conn.CreateCommand();
                         cmd.Transaction = tx;
-                        cmd.CommandText = "INSERT INTO public.general_channel(stationid, rackid, moduleid, channelid, channel_index, name, activity) VALUES(@sid, @rid, @mid, @cid, @cidx, @name, @a)";
+                        // channel_index 는 이 DB에서 GENERATED ALWAYS AS IDENTITY 이므로 직접 넣지 않는다(DB 자동 생성).
+                        cmd.CommandText = "INSERT INTO public.general_channel(stationid, rackid, moduleid, channelid, name, activity) VALUES(@sid, @rid, @mid, @cid, @name, @a)";
                         cmd.Parameters.AddWithValue("sid",  stationId);
                         cmd.Parameters.AddWithValue("rid",  rackId);
                         cmd.Parameters.AddWithValue("mid",  (int)m.Info.Id);
                         cmd.Parameters.AddWithValue("cid",  (int)ch.Info.Id);
-                        cmd.Parameters.AddWithValue("cidx", nextIdx++);
                         cmd.Parameters.AddWithValue("name", $"CH{ch.Info.Id:D2}");
                         cmd.Parameters.AddWithValue("a",    cact);
                         await cmd.ExecuteNonQueryAsync();

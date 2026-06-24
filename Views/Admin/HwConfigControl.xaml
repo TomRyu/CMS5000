@@ -112,7 +112,7 @@
                     <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" BorderThickness="0"
                              FontFamily="Consolas" FontSize="12" Background="White" Foreground="#1F2937"
                              TextWrapping="NoWrap" IsReadOnlyCaretVisible="True"
-                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto"
                              TextChanged="Log_TextChanged"/>
                 </DockPanel>
             </Border>

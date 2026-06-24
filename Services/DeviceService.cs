@@ -234,12 +234,14 @@ public static class DeviceService
                 {
                     await using var cmd = conn.CreateCommand();
                     cmd.Transaction = tx;
-                    cmd.CommandText = "INSERT INTO public.module(stationid, rackid, moduleid, name, activity) VALUES(@sid, @rid, @mid, @name, @a)";
+                    // moduletype 은 NOT NULL 이므로 기기 보고 타입값을 그대로 사용.
+                    cmd.CommandText = "INSERT INTO public.module(stationid, rackid, moduleid, name, activity, moduletype) VALUES(@sid, @rid, @mid, @name, @a, @t)";
                     cmd.Parameters.AddWithValue("sid",  stationId);
                     cmd.Parameters.AddWithValue("rid",  rackId);
                     cmd.Parameters.AddWithValue("mid",  (int)m.Info.Id);
                     cmd.Parameters.AddWithValue("name", $"M{m.Info.Id:D2}");
                     cmd.Parameters.AddWithValue("a",    act);
+                    cmd.Parameters.AddWithValue("t",    (int)m.Info.Type);
                     await cmd.ExecuteNonQueryAsync();
                     modIns++;
                 }

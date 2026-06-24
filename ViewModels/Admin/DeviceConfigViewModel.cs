@@ -2976,7 +2976,8 @@ public class DeviceConfigViewModel : ViewModelBase
             $"• RACK 자체는 유지됩니다(빈 랙으로).\n\n되돌릴 수 없습니다. 진행할까요?",
             "RACK 내용 비우기",
             System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
+            System.Windows.MessageBoxImage.Warning,
+            System.Windows.MessageBoxResult.No);   // 디폴트 버튼 = No(실수 방지)
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
         try

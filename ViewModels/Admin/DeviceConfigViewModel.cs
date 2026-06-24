@@ -494,6 +494,7 @@ public class DeviceConfigViewModel : ViewModelBase
     public RelayCommand RackModifyCommand           { get; }
     public RelayCommand RackHwConfigCommand         { get; }
     public RelayCommand CtxRackDeleteCommand        { get; }
+    public RelayCommand CtxRackClearCommand         { get; }
     public RelayCommand RackCopyCommand             { get; }
     public RelayCommand CtxModuleCopyCommand        { get; }
     public RelayCommand CtxChannelCopyCommand       { get; }
@@ -651,6 +652,8 @@ public class DeviceConfigViewModel : ViewModelBase
                                            _ => SelectedRackNode?.Kind == NodeKind.Rack);
         CtxRackDeleteCommand         = new RelayCommand(_ => _ = CtxRackDeleteAsync(),
                                            _ => SelectedRackNode?.Kind is NodeKind.Rack or NodeKind.Module or NodeKind.Channel);
+        CtxRackClearCommand          = new RelayCommand(_ => _ = CtxRackClearAsync(),
+                                           _ => SelectedRackNode?.Kind == NodeKind.Rack);
         RackCopyCommand              = new RelayCommand(_ => { if (SelectedRackNode?.Kind == NodeKind.Rack) RackCopyRequested?.Invoke(SelectedRackNode); },
                                            _ => SelectedRackNode?.Kind == NodeKind.Rack);
         CtxModuleCopyCommand         = new RelayCommand(_ => { if (SelectedRackNode?.Kind == NodeKind.Module) CopyRequested?.Invoke(SelectedRackNode); },
@@ -2956,6 +2959,38 @@ public class DeviceConfigViewModel : ViewModelBase
             return;
         }
         await DeleteRackNodeAsync();
+    }
+
+    /// <summary>RACK 내용 비우기: 선택한 랙의 모듈/채널만 삭제(rack 행은 유지) 후 트리 갱신.</summary>
+    private async Task CtxRackClearAsync()
+    {
+        var rack = SelectedRackNode;
+        if (rack?.Kind != NodeKind.Rack) return;
+
+        int modCnt = rack.Children.Count(c => c.Kind == NodeKind.Module);
+        int chCnt  = rack.Children.Where(c => c.Kind == NodeKind.Module).Sum(m => m.Children.Count);
+
+        var confirm = System.Windows.MessageBox.Show(
+            $"RACK [{rack.RackId:D2}] 의 내용(모듈/채널)을 모두 삭제합니다.\n\n" +
+            $"• 모듈 {modCnt}개 · 채널 {chCnt}개 삭제\n" +
+            $"• RACK 자체는 유지됩니다(빈 랙으로).\n\n되돌릴 수 없습니다. 진행할까요?",
+            "RACK 내용 비우기",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        try
+        {
+            var (mo, ch) = await DeviceService.ClearRackContentsAsync(rack.StationId, rack.RackId);
+            StatusMessage = $"RACK [{rack.RackId:D2}] 내용 삭제 완료 — 모듈 {mo}, 채널 {ch}";
+            await LoadTreesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"RACK 내용 삭제 실패: {ex.Message}";
+            System.Windows.MessageBox.Show($"삭제 실패: {ex.Message}", "오류",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
     }
 
     private async Task BackupRestoreAllDbAsync()

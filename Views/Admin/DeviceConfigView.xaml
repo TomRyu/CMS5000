@@ -445,6 +445,24 @@
                                                     </MenuItem.Style>
                                                 </MenuItem>
 
+                                                <!-- ── RACK 전용: 내용 비우기(모듈/채널 삭제, 랙 유지) ── -->
+                                                <MenuItem Header="내용 비우기"
+                                                          Command="{Binding PlacementTarget.Tag.CtxRackClearCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                                    </MenuItem.Icon>
+                                                    <MenuItem.Style>
+                                                        <Style TargetType="MenuItem">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding PlacementTarget.DataContext.Kind, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="{x:Static m:NodeKind.Rack}">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </MenuItem.Style>
+                                                </MenuItem>
+
                                                 <!-- ── MODULE 전용: Module Copy ───────── -->
                                                 <MenuItem Header="Module Copy"
                                                           Command="{Binding PlacementTarget.Tag.CtxModuleCopyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}">

@@ -1631,6 +1631,36 @@ public static class DeviceService
         catch { await tx.RollbackAsync(); throw; }
     }
 
+    /// <summary>RACK 내용 비우기: 해당 랙의 채널/모듈만 삭제하고 rack 행은 유지한다. (삭제된 모듈/채널 개수 반환)</summary>
+    public static async Task<(int modules, int channels)> ClearRackContentsAsync(int stationId, int rackId)
+    {
+        await using var conn = await PostgresService.DataSource.OpenConnectionAsync();
+        await using var tx   = await conn.BeginTransactionAsync();
+        try
+        {
+            int ch, mo;
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "DELETE FROM public.general_channel WHERE stationid=@sid AND rackid=@rid";
+                cmd.Parameters.AddWithValue("sid", stationId);
+                cmd.Parameters.AddWithValue("rid", rackId);
+                ch = await cmd.ExecuteNonQueryAsync();
+            }
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "DELETE FROM public.module WHERE stationid=@sid AND rackid=@rid";
+                cmd.Parameters.AddWithValue("sid", stationId);
+                cmd.Parameters.AddWithValue("rid", rackId);
+                mo = await cmd.ExecuteNonQueryAsync();
+            }
+            await tx.CommitAsync();
+            return (mo, ch);
+        }
+        catch { await tx.RollbackAsync(); throw; }
+    }
+
     // ────────────────────────────────────────────────────────
     //  MODULE CRUD
     // ────────────────────────────────────────────────────────

@@ -323,7 +323,8 @@ public class HwConfigViewModel : ViewModelBase
             $"• 센서/스케일/알람·모듈타입 등 상세값은 저장하지 않습니다." +
             mismatch +
             $"\n진행할까요?",
-            "DB 저장 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            "DB 저장 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+            MessageBoxResult.No);   // 디폴트 버튼 = No(실수 방지)
         if (confirm != MessageBoxResult.Yes) return;
 
         try

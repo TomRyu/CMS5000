@@ -100,6 +100,10 @@ public class HwConfigViewModel : ViewModelBase
     private bool _logRawHex = true;
     public bool LogRawHex { get => _logRawHex; set => SetProperty(ref _logRawHex, value); }
 
+    /// <summary>RACK LIST 체크박스 표시 여부. 기본 표시, UpLoad 후 숨김 / DownLoad 시 다시 표시.</summary>
+    private bool _showCheckBoxes = true;
+    public bool ShowCheckBoxes { get => _showCheckBoxes; set => SetProperty(ref _showCheckBoxes, value); }
+
     public HwConfigViewModel(DeviceTreeNode rackNode)
     {
         _rack = rackNode;
@@ -119,7 +123,7 @@ public class HwConfigViewModel : ViewModelBase
 
         ConnectCommand    = new RelayCommand(_ => Connect(),    _ => !Connected);
         DisconnectCommand = new RelayCommand(_ => _socket.Disconnect(), _ => Connected);
-        DownloadCommand   = new RelayCommand(_ => _ = DownloadAsync(), _ => Connected);
+        DownloadCommand   = new RelayCommand(_ => { ShowCheckBoxes = true; _ = DownloadAsync(); }, _ => Connected);
         UploadCommand     = new RelayCommand(_ => Upload(),     _ => Connected);
         ClearCommand      = new RelayCommand(_ => Log.Clear());
         SaveLogCommand    = new RelayCommand(_ => SaveLog(), _ => Log.Count > 0);
@@ -196,6 +200,8 @@ public class HwConfigViewModel : ViewModelBase
 
     private void Upload()
     {
+        ShowCheckBoxes = false;   // UpLoad(기기→PC 읽기)는 선택이 필요 없으므로 체크박스 숨김
+
         // 기존 기기 응답 표시 초기화(이번 UpLoad 결과로 다시 채움)
         foreach (var n in Flatten(Nodes)) { n.FromDevice = false; n.DeviceInfo = null; }
 

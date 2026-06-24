@@ -52,8 +52,38 @@
                 <TextBlock Text="Port" Style="{StaticResource Lbl}" Margin="10,0,6,0"/>
                 <TextBox Style="{StaticResource Input}" Width="70" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Disconnected}"/>
                 <Rectangle Width="1" Fill="#D0D0D0" Margin="12,2"/>
-                <Button Style="{StaticResource Tool}" Command="{Binding ConnectCommand}"><TextBlock Text="Connection" FontSize="12"/></Button>
-                <Button Style="{StaticResource Tool}" Command="{Binding DisconnectCommand}"><TextBlock Text="DisConnection" FontSize="12"/></Button>
+                <Button Style="{StaticResource Tool}" Command="{Binding ToggleConnectionCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <!-- 연결 안 됨: 연결(이더넷) 아이콘, 초록 -->
+                                    <Setter Property="Text" Value="&#xE839;"/>
+                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                    <Style.Triggers>
+                                        <!-- 연결됨: 연결 해제(X) 아이콘, 빨강 -->
+                                        <DataTrigger Binding="{Binding Connected}" Value="True">
+                                            <Setter Property="Text" Value="&#xE711;"/>
+                                            <Setter Property="Foreground" Value="#DC2626"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock FontSize="12" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="Connection"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Connected}" Value="True">
+                                            <Setter Property="Text" Value="DisConnection"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
                 <Button Style="{StaticResource Tool}" Command="{Binding DownloadCommand}"><TextBlock Text="DownLoad" FontSize="12"/></Button>
                 <Button Style="{StaticResource Tool}" Command="{Binding UploadCommand}"><TextBlock Text="UpLoad" FontSize="12"/></Button>
                 <Button Style="{StaticResource Tool}" Command="{Binding ClearCommand}"><TextBlock Text="Clear" FontSize="12"/></Button>

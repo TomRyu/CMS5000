@@ -91,6 +91,7 @@ public class HwConfigViewModel : ViewModelBase
 
     public RelayCommand ConnectCommand    { get; }
     public RelayCommand DisconnectCommand { get; }
+    public RelayCommand ToggleConnectionCommand { get; }
     public RelayCommand DownloadCommand   { get; }
     public RelayCommand UploadCommand     { get; }
     public RelayCommand ClearCommand      { get; }
@@ -130,6 +131,7 @@ public class HwConfigViewModel : ViewModelBase
 
         ConnectCommand    = new RelayCommand(_ => Connect(),    _ => !Connected);
         DisconnectCommand = new RelayCommand(_ => _socket.Disconnect(), _ => Connected);
+        ToggleConnectionCommand = new RelayCommand(_ => { if (Connected) _socket.Disconnect(); else Connect(); });
         DownloadCommand   = new RelayCommand(_ => { ShowCheckBoxes = true; _ = DownloadAsync(); }, _ => Connected);
         UploadCommand     = new RelayCommand(_ => Upload(),     _ => Connected);
         ClearCommand      = new RelayCommand(_ => Log.Clear());

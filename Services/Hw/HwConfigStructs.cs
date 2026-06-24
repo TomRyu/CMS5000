@@ -253,4 +253,28 @@ public static class HwMarshal
     }
 
     public static int SizeOf<T>() where T : struct => Marshal.SizeOf<T>();
+
+    /// <summary>byte[] → 구조체 (원본 Marshal.PtrToStructure 와 동일). GetBytes 의 역방향.</summary>
+    public static T FromBytes<T>(byte[] buf, int offset = 0) where T : struct
+    {
+        int size = Marshal.SizeOf<T>();
+        if (buf == null || offset < 0 || buf.Length - offset < size)
+            throw new ArgumentException($"버퍼 부족: {typeof(T).Name} 는 {size}바이트 필요(남은 {(buf?.Length ?? 0) - offset}바이트).");
+        IntPtr ptr = Marshal.AllocHGlobal(size);
+        try
+        {
+            Marshal.Copy(buf, offset, ptr, size);
+            return Marshal.PtrToStructure<T>(ptr);
+        }
+        finally { Marshal.FreeHGlobal(ptr); }
+    }
+
+    /// <summary>길이가 부족하면 false. 부족한 응답을 예외 없이 무시할 때 사용.</summary>
+    public static bool TryFromBytes<T>(byte[] buf, out T value, int offset = 0) where T : struct
+    {
+        value = default;
+        if (buf == null || offset < 0 || buf.Length - offset < Marshal.SizeOf<T>()) return false;
+        value = FromBytes<T>(buf, offset);
+        return true;
+    }
 }

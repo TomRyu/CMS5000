@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F0F0F3">
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="B2V"/>
         <Style x:Key="Tool" TargetType="Button">
             <Setter Property="Padding" Value="14,6"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
@@ -80,7 +81,20 @@
                             <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                 <StackPanel Orientation="Horizontal">
                                     <CheckBox IsChecked="{Binding IsChecked}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                    <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#1F2937" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding FromDevice}" Value="True">
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding DeviceInfo}" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"
+                                               Margin="8,0,0,0" Visibility="{Binding HasDeviceInfo, Converter={StaticResource B2V}}"/>
                                 </StackPanel>
                             </HierarchicalDataTemplate>
                         </TreeView.ItemTemplate>
